@@ -1,24 +1,19 @@
-// static load: $ node static.js
-// get INSSE Tempo data
-
+// get INSSE-Tempo metadata
 
 // import libraries
 const fs = require('fs');
-// import readline from 'readline';
-// import path from 'path';
-// import sequelize from 'sequelize';
-// import http from 'http';
 const axios = require('axios');
-// const logger = require('../../node_modules/morgan/index');
+
 
 // /////////////////////////////////////////////////////////////////////////////
-// // declare functions
+// // EXPORTS
 
-// // create latex file for given UAT code_siruta
-async function downloadDB() {
+// // get metadata from INSSE-Tempo server and save it in JSON files
+module.exports = async (today) => {
+	
 	console.log('@INSSE::Tempo import started ... ');
 	// declare variables
-	const savePath = './data/metadata';
+	const savePath = `./${today}/metadata`;
 	const tempoL1Path = 'http://statistici.insse.ro:8077/tempo-ins/context/';
 	const tempoL3Path = 'http://statistici.insse.ro:8077/tempo-ins/matrix/';
 	const tempoL1File = `${savePath}/tempoL1.json`;
@@ -71,18 +66,7 @@ async function downloadDB() {
 	tempoL2.level2.map((item) => {
 		// console.log(item.children);
 		l2list = l2list.concat(item.children);
-		// // select only population
-		// if (item.ancestors[2].code === '10') {
-		// 	l2list = l2list.concat(item.children);
-		// }
 	});
-
-	// // test code for first item
-	// await axios.get(tempoL3Path + l2list[0].code)
-	// 	.then((response) => {
-	// 		console.log(response.data);
-	// 	})
-	// 	.catch(err => console.log(err));
 
 	console.log('@INSSE::Level 3: L2 list - ', l2list.length);
 	// declare query function
@@ -111,7 +95,7 @@ async function downloadDB() {
 		const batchList = itemsList.splice(0, 10);
 		tempoL3.level3 = tempoL3.level3.concat(await getL3(batchList)
 			.then((res) => {
-				console.log(`L3 download: ${iter}/1319`);
+				console.log(`L3 download: ${iter}/1324 (probably)`);
 				// fs.appendFileSync(tempoL3File, JSON.stringify(res), 'utf8');
 				return res;
 			})
@@ -120,15 +104,4 @@ async function downloadDB() {
 	console.log('@INSSE:Level 3: Done reading from source');
 	// write to file
 	fs.writeFile(tempoL3File, JSON.stringify(tempoL3), 'utf8', () => console.log(`@INSSE::Level 3: File tempoL3.json closed: ${tempoL3.level3.length} items`));
-
-	
-	// // get tempo Level 4: Tables data
-
-
 }
-
-
-// ////////////////////////////////////////////////////////////////////////////
-// // main area
-
-downloadDB();

@@ -1,6 +1,16 @@
 const fs = require('fs-extra');
 const glob = require('glob');
 
+// import local modules
+const getMetadata = require('./src/getMetadata.js');
+const createIndexList = require('./src/createIndexList.js');
+
+// paths
+const metadataFolder = 'metadata';
+const tablesFolder = 'tables';
+const logsFolder = 'logs';
+const permutationsFolder = 'permutations';
+
 
 // ////////////////////////////////////////////////////////////////////////////
 // // METHODS
@@ -8,7 +18,7 @@ const glob = require('glob');
 // ////////////////////////////////////////////////////////////////////////////
 // helper functions
 
-// create folder
+// create download folder
 function createFolder(folderName) {
   if (!fs.existsSync(folderName)){
     fs.mkdirSync(folderName);
@@ -18,7 +28,7 @@ function createFolder(folderName) {
   }
 };
 
-// remove folder and any files inside
+// remove download folder and any files inside
 function removeFolder(folderName) {
   if (fs.existsSync(folderName)){
     const pathArr = fs.readdirSync(folderName);
@@ -32,18 +42,18 @@ function removeFolder(folderName) {
   }
 };
 
-// init folders for new download
+// init sub-folders for new download
 function initFolders(today) {
   // create current date root folder
   createFolder(today);
   // create metadata folder
-  createFolder(`${today}/metadata`);
+  createFolder(`${today}/${metadataFolder}`);
   // create tables folder
-  createFolder(`${today}/tables`);
+  createFolder(`${today}/${tablesFolder}`);
   // create logs folder
-  createFolder(`${today}/logs`);
+  createFolder(`${today}/${logsFolder}`);
   // create permutations folder
-  createFolder(`${today}/permutations`);
+  createFolder(`${today}/${permutationsFolder}`);
 }
 
 // get current date - formated
@@ -54,7 +64,7 @@ function getCurrentDate() {
   return today.match(regex)[0];
 };
 
-// get most recent folder
+// get most recent download folder
 function getRecentFolder(today) {
   // create folder pattern
   const folderPattern = '????-??-??';
@@ -76,8 +86,61 @@ function getRecentFolder(today) {
   };
 };
 
+// check if metadata files are present in download folder
+function checkMetadata(today) {
+  const metadataPath = `${today}/${metadataFolder}`;
+  // check if metadata folder exists
+  if (fs.existsSync(metadataPath)){
+    console.log('\x1b[34m%s\x1b[0m', `INFO: Metadata folder found!\n`);
+    // check if json files are present
+    const level1 = fs.existsSync(`${metadataPath}/tempoL1.json`);
+    const level2 = fs.existsSync(`${metadataPath}/tempoL2.json`);
+    const level3 = fs.existsSync(`${metadataPath}/tempoL3.json`);
+    // if all files are present
+    if (level1 && level2 && level3) {
+      console.log('\x1b[34m%s\x1b[0m', `INFO: All metadata files are found!\n`);
+      // return true
+      return true;
+    // if some files are missing
+    } else {
+      console.log('\x1b[34m%s\x1b[0m', `INFO: Some metadata files are missing!\n`);
+      // return false
+      return false;
+    }
+  // metadata folder is not found, return false
+  } else {
+    console.log('\x1b[34m%s\x1b[0m', `INFO: Metadata folder does not exist!\n`);
+    return false;
+  };
+};
+
+// check if index list exists
+function checkIndexList(today) {
+  const indexPath = `${today}/${metadataFolder}`;
+  // check if metadata folder exists
+  if (fs.existsSync(indexPath)){
+    console.log('\x1b[34m%s\x1b[0m', `INFO: Metadata folder found!\n`);
+    // check if index list file is present
+    if (fs.existsSync(`${indexPath}/indexList.csv`)) {
+      console.log('\x1b[34m%s\x1b[0m', `INFO: Index List file found!\n`);
+      // return true
+      return true;
+    // if index list file is missing
+    } else {
+      console.log('\x1b[34m%s\x1b[0m', `INFO: Index List File is missing!\n`);
+      // return false
+      return false;
+    }
+  // metadata folder is not found, return false
+  } else {
+    console.log('\x1b[34m%s\x1b[0m', `INFO: Metadata folder does not exist!\n`);
+    return false;
+  };
+};
+
+
 // ////////////////////////////////////////////////////////////////////////////
-// MENU functions
+// // MENU functions
 
 // start new download
 function newDownload(today) {
@@ -87,15 +150,41 @@ function newDownload(today) {
   fs.removeSync(today);
   // initiate new folders
   initFolders(today);
+  // get metadata
+  getMetadata(today);
+  // create index list
+  createIndexList(today);
+  // for each item in index list create query permutations
+
+  // start downloads
 
 };
 
 // continue most recent download
 function continueDownload(today) {
   console.log('\x1b[34m%s\x1b[0m', `INFO: Continue most recent download\n`);
+  // request most recent folder
   const folderName = getRecentFolder(today);
+  // if a valid folder is found
   if (folderName !== '') {
-    console.log('\x1b[32m%s\x1b[0m',`SUCCESS: Recent download folder found >>> \"${folderName}\"`);
+    console.log('\x1b[32m%s\x1b[0m',`SUCCESS: Recent download folder found >>> \"${folderName}\"\n`);
+    // // the stge of downloads
+    // check for metadata files
+    if (!checkMetadata(today)) {
+      getMetadata(today);
+    };
+    // check for index list
+    if (!checkIndexList(today)) {
+      createIndexList(today);
+    };
+    // check permutations
+
+    // check logs for progress
+
+    // continue downloads
+
+
+  // if no downloads folder is found  
   } else {
     console.log('\x1b[31m%s\x1b[0m',`ERROR: NO download folders found!`);
   }
@@ -103,7 +192,7 @@ function continueDownload(today) {
 
 
 // ////////////////////////////////////////////////////////////////////////////
-// MAIN function
+// // MAIN function
 function main() {
   // get current date
   const today = getCurrentDate();
