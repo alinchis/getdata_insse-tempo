@@ -1,0 +1,17 @@
+
+// import libraries
+const fs = require('fs');
+
+// paths
+const inputPath = '../../../docker-data/control/insse/2019-06-16_tempo';
+const outputPath = '../../../docker-data/control/insse/tempo';
+
+const tempoL3File = `${inputPath}/metadata/tempoL3.json`;
+
+// ////////////////////////////////////////////////////////////////////////////////////////////
+// // METHODS
+
+
+// ////////////////////////////////////////////////////////////////////////////////////////////
+// // MAIN
+

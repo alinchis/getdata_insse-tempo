@@ -1,0 +1,23 @@
+{
+  "name": "getdata_insse-tempo",
+  "version": "1.0.0",
+  "description": "A set of commands to download and prepare INSSE-Tempo data",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "insse",
+    "tempo",
+    "db",
+    "index",
+    "indexes",
+    "statistics"
+  ],
+  "author": "Alin CHIS",
+  "license": "ISC",
+  "dependencies": {
+    "fs-extra": "^8.0.1",
+    "glob": "^7.1.4"
+  }
+}
