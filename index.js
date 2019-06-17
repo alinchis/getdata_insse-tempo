@@ -4,6 +4,7 @@ const glob = require('glob');
 // import local modules
 const getMetadata = require('./src/getMetadata.js');
 const createIndexList = require('./src/createIndexList.js');
+const createPermutations = require('./src/createPermutations.js');
 
 // paths
 const metadataFolder = 'metadata';
@@ -138,6 +139,11 @@ function checkIndexList(today) {
   };
 };
 
+// check for existing permutations
+function checkPermutations(todax) {
+
+};
+
 
 // ////////////////////////////////////////////////////////////////////////////
 // // MENU functions
@@ -155,7 +161,7 @@ function newDownload(today) {
   // create index list
   createIndexList(today);
   // for each item in index list create query permutations
-
+  createPermutations(today);
   // start downloads
 
 };
@@ -164,21 +170,23 @@ function newDownload(today) {
 function continueDownload(today) {
   console.log('\x1b[34m%s\x1b[0m', `INFO: Continue most recent download\n`);
   // request most recent folder
-  const folderName = getRecentFolder(today);
+  const currentDownloadFolder = getRecentFolder(today);
   // if a valid folder is found
-  if (folderName !== '') {
-    console.log('\x1b[32m%s\x1b[0m',`SUCCESS: Recent download folder found >>> \"${folderName}\"\n`);
+  if (currentDownloadFolder !== '') {
+    console.log('\x1b[32m%s\x1b[0m',`SUCCESS: Recent download folder found >>> \"${currentDownloadFolder}\"\n`);
     // // the stge of downloads
     // check for metadata files
-    if (!checkMetadata(today)) {
-      getMetadata(today);
+    if (!checkMetadata(currentDownloadFolder)) {
+      getMetadata(currentDownloadFolder);
     };
     // check for index list
-    if (!checkIndexList(today)) {
-      createIndexList(today);
+    if (!checkIndexList(currentDownloadFolder)) {
+      createIndexList(currentDownloadFolder);
     };
     // check permutations
-
+    if (!checkPermutations(currentDownloadFolder)) {
+      createPermutations(currentDownloadFolder);
+    }
     // check logs for progress
 
     // continue downloads

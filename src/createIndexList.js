@@ -1,3 +1,4 @@
+// create index list
 
 // import libraries
 const fs = require('fs');
@@ -105,9 +106,9 @@ function getGranularity(tableName) {
 
 // ////////////////////////////////////////////////////////////////////////////////////////////
 // // EXPORTS
-module.exports = async (today) => {
+module.exports = async (downloadDate) => {
   // save path
-  const folderPath = `./${today}/metadata`;
+  const folderPath = `./${downloadDate}/metadata`;
   // read file
   const tempoL3 = readFile(`${folderPath}/tempoL3.json`, 'utf8').level3;
   console.log('\x1b[34m%s\x1b[0m', `INFO: tempo level 3 array length = ${tempoL3.length}\n`);
