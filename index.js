@@ -338,7 +338,9 @@ function main() {
   // if argument is missing, -h is set by default
   const mainArg = process.argv[2] || '-h';
   const tablesList = {
-      'INT109A': [],
+      // 'INO101G': [],
+      // 'INT109A': [],
+      // 'POP105A': [],
     };
 
   // run requested command

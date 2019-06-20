@@ -41,7 +41,7 @@ function readCSV(filePath, delimiter) {
   };
   // else return empty object
   console.log('\x1b[31m%s\x1b[0m',`ERROR: ${filePath} file NOT found!`);
-  return {};
+  return [];
 };
 
 // /////////////////////////////////////////////////////////////////////
@@ -86,19 +86,34 @@ function createPostBody(header, permutation) {
 
 // /////////////////////////////////////////////////////////////////////
 // for given table with permutations, request data from server
-function postRequest(downloadDate, tablePrefix, tableName, permutationIndex, permutationsTotal, postBody) {
-  console.log('\x1b[34m%s\x1b[0m', `${tablePrefix} ${tableName} :: ${permutationIndex}/${permutationsTotal}  @postRequest >>> SEND`);
-  // build path
-  const reqPath = `${requestPath}/${tableName}`;
-  // return post request server response
-  return axios.post(reqPath, postBody)
-    // .catch((err) => {
-    //   console.log('\x1b[31m%s\x1b[0m', `${tablePrefix} ${tableName} :: ${permutationIndex}/${permutationsTotal}  @postRequest >>> Axios request ERROR!`);
-    //   // save error to log
-    //   // const messageArr = [permutationIndex, 'ERROR', 'Axios request ERROR'];
-    //   // appendLog(downloadDate, tableName, `${messageArr.join(',')}\n`);
-    //   return err.data;
-    // });
+async function postRequest(downloadDate, table, permutationIndex, permutationsTotal, postBody) {
+  const resData = await axios.post(reqPath, postBody);
+  console.log('\x1b[33m%s\x1b[0m', `${table.tablePrefix}.${table.tableName} :: ${permutationIndex}/${permutationsTotal} >>> RESPONSE arrived`);
+  // test response data contains data
+  if (resData.data != null) {
+    const testData = testForData(table.tablePrefix, table.tableName, permutationIndex, permutationsTotal, resData.data);
+    // if response has data, extract data from html
+    if (testData) {
+      // set retry flag to false
+      retryFlag = false;
+      // /////////////////////////////////
+      // return data extracted from html
+      return extractData(table.tablePrefix, table.tableName, permutationIndex, permutationsTotal, resData.data);
+      // return resData.data;
+    // response has no data branch
+    } else {
+      console.log('\x1b[31m%s\x1b[0m', `${table.tablePrefix}.${table.tableName} :: ${permutationIndex}/${permutationsTotal} >>> ERROR: postData returns NO DATA`);
+      // save error to log
+      const errMessageArr = [permutationIndex, 'ERROR', 'postData returns no data'];
+      appendLog(downloadDate, table.tableName, `${errMessageArr.join(',')}\n`);
+    };
+  // response is undefined
+  } else {
+    console.log('\x1b[31m%s\x1b[0m', `${table.tablePrefix}.${table.tableName} :: ${permutationIndex}/${permutationsTotal} >>> ERROR: postData returns "undefined"`);
+    // save error to log
+    const errMessageArr = [permutationIndex, 'ERROR', 'postData returns \"undefined\"'];
+    appendLog(downloadDate, table.tableName, `${errMessageArr.join(',')}\n`);
+  };
 };
 
 // /////////////////////////////////////////////////////////////////////
@@ -148,10 +163,35 @@ function appendLog(downloadDate, tableName, message) {
 };
 
 // /////////////////////////////////////////////////////////////////////
+// append tables log file
+function appendCompletedLog(downloadDate, message) {
+  const logFile = `./${downloadDate}/logs/tablesProgress.csv`;
+  fs.appendFile(logFile, message, (err) => {
+    if (err) throw err;
+    // console.log('Log entry done!');
+  });
+};
+
+// /////////////////////////////////////////////////////////////////////
 // append data file
 function writeData(filePath, message) {
   // write to file
 	fs.writeFileSync(filePath, message, 'utf8');
+};
+
+// /////////////////////////////////////////////////////////////////////
+// break array into chunks
+function chunkArray(myArray, chunk_size){
+  const arrayLength = myArray.length;
+  const tempArray = [];
+  
+  for (let index = 0; index < arrayLength; index += chunk_size) {
+      myChunk = myArray.slice(index, index+chunk_size);
+      // Do something if you want with the group
+      tempArray.push(myChunk);
+  }
+
+  return tempArray;
 };
 
 // /////////////////////////////////////////////////////////////////////
@@ -193,7 +233,7 @@ function cleanData(resArray) {
 
 // /////////////////////////////////////////////////////////////////////
 // extract data from html
-async function extractData(tablePrefix, tableName, permutationIndex, permutationsTotal, resData) {
+async function extractData(tablePrefix, tableName, permutationIndex, permutationsTotal, resData, tType) {
   const returnArray = [];
   // remove unnecessary '\n' characters
   const htmlTable = resData.resultTable.replace(/\\n/g, '');
@@ -223,27 +263,38 @@ async function extractData(tablePrefix, tableName, permutationIndex, permutation
   const tableType = umHeaderItem.includes('um:') || umHeaderItem.includes('unitati de masura') ? 'B' : 'A';
   console.log(`Table type: ${tableType}`);
 
-  // create header
-  const tableHeader = [];
-  // if keys array has more than two columns
-  if (kArrLength > 2) {
-   // add keys array items to header
-   tableHeader.push(...keysArray.slice(0, kArrLength - 1));
-   // add times array items to header
-   tableHeader.push(...timesArray);
-  // else, if keys array has one or two columns
-  } else {
-    // manually add 'UM' column and the times array
-    tableHeader.push('UM', ...timesArray);
- };
-
+  // if this is the first permutation
+  // create and add headers
+  if (permutationIndex === 0) {
+    // create header
+    const tableHeader = [];
+    // if keys array has more than two columns
+    if (kArrLength > 2) {
+    // add keys array items to header
+    tableHeader.push(...keysArray.slice(0, kArrLength - 1));
+    // add times array items to header
+    tableHeader.push(...timesArray);
+    // else, if keys array has one or two columns
+    } else {
+      // manually add 'UM' column and the times array
+      tableHeader.push('UM', ...timesArray);
+    };
+    if (tableType === 'A') {
+      // add 'UM' item to header
+      tableHeader.splice(kArrLength, 0, 'UM');
+      // add header to return array
+      returnArray.push(`${tableHeader.join(';')}`);
+    } else if (tableType === 'B') {
+      // add header to return array
+      returnArray.push(`${tableHeader.join(';')}`);
+    };
+  };
+  
+  // if table is of type A
   if (tableType === 'A') {
-    // add 'UM' item to header
-    tableHeader.splice(kArrLength, 0, 'UM');
-
-    // add header to return array
-    returnArray.push(`${tableHeader.join(';')}`);
-
+    // get UM value
+    const umValue = $(trArray).eq(4).children().eq(0).text();
+    console.log(`umValue: ${umValue}`);
     // filter out the first 5 rows
     // 0: tableTitle, 1: keys array (w/o UM), 2: timesArray, 3: UM header, 4: UM array
     // last row is footer
@@ -263,10 +314,8 @@ async function extractData(tablePrefix, tableName, permutationIndex, permutation
         returnArray.push(`${rowArray.join(';')}`);
     });
 
+  // else, if table is of type B
   } else if (tableType === 'B') {
-    // add header to return array
-    returnArray.push(`${tableHeader.join(';')}`);
-
     // filter out the first 5 rows
     // 0: tableTitle, 1: keys array (w/o UM), 2: timesArray, 3: UM header, 4: UM array
     // last row is footer
@@ -317,10 +366,10 @@ async function getTableData(downloadDate, table, permutation, permutationsTotal)
     // postRequest(downloadDate, table.tablePrefix, table.tableName, permutation[0], permutationsTotal, postBody)
     console.log('\x1b[33m%s\x1b[0m', `${table.tablePrefix}.${table.tableName} :: ${permutation[0]}/${permutationsTotal} >>> SEND request`);
     try {
-      // send request to server and await for response
+      // resData = await postRequest(downloadDate, table, permutation[0], permutationsTotal, postBody);
       resData = await axios.post(reqPath, postBody);
       console.log('\x1b[33m%s\x1b[0m', `${table.tablePrefix}.${table.tableName} :: ${permutation[0]}/${permutationsTotal} >>> RESPONSE arrived`);
-      // test response data contains data
+      // test if response data contains data
       if (resData.data != null) {
         const testData = testForData(table.tablePrefix, table.tableName, permutation[0], permutationsTotal, resData.data);
         // if response has data, extract data from html
@@ -329,6 +378,10 @@ async function getTableData(downloadDate, table, permutation, permutationsTotal)
           retryFlag = false;
           // /////////////////////////////////
           // return data extracted from html
+          // save progress to log
+          const messageArr = [permutationIndex, 'OK', 'Return DATA'];
+          appendLog(downloadDate, tableName, `${messageArr.join(',')}\n`);
+          // return data
           return extractData(table.tablePrefix, table.tableName, permutation[0], permutationsTotal, resData.data);
           // return resData.data;
         // response has no data branch
@@ -365,89 +418,105 @@ async function downloadTable(downloadDate, table, manualPermIndex) {
   console.log('\x1b[34m%s\x1b[0m', `\nPROGRESS: Download Table >>> ${table.tablePrefix}.${table.tableName}`);
   
   // get permutations from saved file
-  const permutationArrayAll = readCSV(`./${downloadDate}/permutations/${table.tableName}.csv`, '#');
-  const permutationsTotal = permutationArrayAll.length;
+  const permutationsArrayAll = readCSV(`./${downloadDate}/permutations/${table.tableName}.csv`, '#');
+  const permutationsTotal = permutationsArrayAll.length;
   console.log('\x1b[33m%s\x1b[0m', `\n${table.tablePrefix}.${table.tableName} total permutations = ${permutationsTotal}`);
-  // create query permutation array
-  let permutationsArrayRest = [];
-  // if a manual permutations array is specified
-  if (manualPermIndex.length > 0) {
-    // get the permutation from the permutationArrayAll for the requested indexes
-    permutationsArrayRest = permutationArrayAll.filter(item => manualPermIndex.includes(item[0]));
-    // if no permutations are found for the provided indexes
-    if (!permutationsArrayRest.length > 0) {
-      console.log(`ERROR: ${tablePrefix}.${tableName} the provided permutation indexes do not match to available permutations\n`);
-      // throw error
-      throw new Error(`${tablePrefix}.${tableName} :: ERROR: the provided permutation indexes do not match to available permutations\n`);
-    };
-  // else, if no manual permutations array is specified
-  } else {
-    // get permutations from logs
-    const permutationsArrayLogs = readCSV(`./${downloadDate}/logs/${table.tableName}.csv`, ',');
-    // calculate remaining permutations
-    permutationsArrayRest = getArraysDiff(permutationArrayAll, permutationsArrayLogs);
-    console.log('\x1b[33m%s\x1b[0m', `\n${table.tablePrefix}.${table.tableName} remaining permutations = ${permutationsArrayRest.length} / ${permutationsTotal}`);
-  };
-  
-  // Throttle requests
-  // limiter.removeTokens(1, async function(err, remainingRequests) {
+  // // create query permutation array
+  // let permutationsArrayRest = [];
+  // // if a manual permutations array is specified
+  // if (manualPermIndex.length > 0) {
+  //   // get the permutation from the permutationArrayAll for the requested indexes
+  //   permutationsArrayRest = permutationArrayAll.filter(item => manualPermIndex.includes(item[0]));
+  //   // if no permutations are found for the provided indexes
+  //   if (!permutationsArrayRest.length > 0) {
+  //     console.log(`ERROR: ${tablePrefix}.${tableName} the provided permutation indexes do not match to available permutations\n`);
+  //     // throw error
+  //     throw new Error(`${tablePrefix}.${tableName} :: ERROR: the provided permutation indexes do not match to available permutations\n`);
+  //   };
+  // // else, if no manual permutations array is specified
+  // } else {
+  //   // get permutations from logs
+  //   const permutationsArrayLogs = readCSV(`./${downloadDate}/logs/${table.tableName}.csv`, ',');
+  //   // calculate remaining permutations
+  //   permutationsArrayRest = getArraysDiff(permutationArrayAll, permutationsArrayLogs);
+  //   console.log('\x1b[33m%s\x1b[0m', `\n${table.tablePrefix}.${table.tableName} remaining permutations = ${permutationsArrayRest.length} / ${permutationsTotal}`);
+  // };
 
-  // for each permutation not downloaded yet
-  const tableData = await Promise.all(permutationsArrayRest.map(async (permutation) => {
-    
-      // err will only be set if we request more than the maximum number of
-      // requests we set in the constructor
-      
-      // remainingRequests tells us how many additional requests could be sent
-      // right this moment
+  // create batches from permutations array
+  const batchArray = chunkArray(permutationsArrayAll, 10);
+  // for each batch get data
+  const tableData = []
+  for (let i = 0; i < batchArray.length; i += 1) {
+    console.log('\x1b[33m%s\x1b[0m', `\n${table.tablePrefix}.${table.tableName} :: batch ${i + 1}/${batchArray.length} >>>>>>>>>>>>>>>>>>>>>>>>>>>`);
+    tableData.push( await Promise.all( batchArray[i].map( async (permutation) => {
       return getTableData(downloadDate, table, permutation, permutationsTotal);
-      // callMyRequestSendingFunction(...);
+    })).catch( e => {
+      console.log("ERROR: some Promise is broken in @getTableData", e)
+    })
+    );
+  };
 
-        // setTimeout(() => {
-        //   // get table data
-        //   return getTableData(downloadDate, table, permutation, permutationsTotal);
-        // }, 1000);
-
-  }));
 
   // replace '-' cells with parent data
   // tableData is an array of arrays [['item;item;item', 'line2', 'line3', ..],[],..[]]
-  console.log('\x1b[33m%s\x1b[0m', `\n${table.tablePrefix}.${table.tableName} :: clean data >>>`);
-  const cleanedData = cleanData(tableData);
+  console.log('\x1b[33m%s\x1b[0m', `\n${table.tablePrefix}.${table.tableName} :: clean DATA >>>`);
+  const cleanedData = cleanData(tableData.flat());
   
   // save data to file
-  console.log('\x1b[33m%s\x1b[0m', `\n${table.tablePrefix}.${table.tableName} :: >>> save data`);
+  console.log('\x1b[33m%s\x1b[0m', `\n${table.tablePrefix}.${table.tableName} :: >>> save DATA`);
   writeData(`./${downloadDate}/tables/${table.tableName}.csv`, `${cleanedData.join('\n')}\n`);
 
+  // save log
+  console.log('\x1b[33m%s\x1b[0m', `\n${table.tablePrefix}.${table.tableName} :: >>> save LOG`);
+  appendCompletedLog(downloadDate, `${toble.tableName}\n`);
 };
 
 // /////////////////////////////////////////////////////////////////////
 // download array of tables
-function downloadTables(downloadDate, tempoL3, tablesList) {
+async function downloadTables(downloadDate, tempoL3, tablesList) {
   console.log('\x1b[34m%s\x1b[0m', `\nPROGRESS: Download Tables Array >>> START`);
-  // get tables list
+  // get tables list from custom provided tables
   const tablesKeys = Object.keys(tablesList);
+
+  // get finished tables from tables log
+  // read files
+  const completedLogPath = `./${downloadDate}/logs/tablesProgress.csv`;
+  const completedTables = [];
+  // if completed log file exists
+  if (fs.existsSync(completedLogPath)) {
+    // return parsed file
+    completedTables.push(...fs.readFileSync(completedLogPath, 'utf8').split('\n'));
+  };
 
   // if a list of table is requested
   if (tablesKeys.length > 0) {
     // tempaL3 array is filtered for only those items
-    const downloadsArray = tempoL3.filter(item => tablesKeys.includes(item.tableName));
+    const tablesArray = tempoL3.filter(item => {
+      return tablesKeys.includes(item.tableName) && !completedTables.includes(item.tableName);
+    });
     // if matches are found
-    if (downloadsArray.length > 0) {
+    if (tablesArray.length > 0) {
+      console.log(`tablesArray.length = ${tablesArray.length}`);
       // // for each file in array
-      downloadsArray.forEach((table) => {
-        // download table data and save it in csv file
-        downloadTable(downloadDate, table, tablesList[table.tableName]);
-      });
+      // tablesArray.forEach(async (table) => {
+      //   // download table data and save it in csv file
+      //   await downloadTable(downloadDate, table, tablesList[table.tableName]);
+      // });
+
+      for (table of tablesArray) {
+        await downloadTable(downloadDate, table, tablesList[table.tableName]);
+      }
     }
 
   // if the list is empty download all tables
   } else {
-    // for each file in array
-    tempoL3.forEach((table) => {
-      // download table data and save it in csv file
-      downloadTable(downloadDate, table, []);
+     // completed tables are removed from list
+     const tablesArray = tempoL3.filter(item => {
+      return !completedTables.includes(item.tableName);
     });
+    for (table of tablesArray) {
+      await downloadTable(downloadDate, table, []);
+    }
   }
 
  };
@@ -458,14 +527,14 @@ function downloadTables(downloadDate, tempoL3, tablesList) {
 module.exports =  (downloadDate, tablesArray, newFlag) => {
   console.log('\x1b[34m%s\x1b[0m', `\nSTART: Download Tables >>> ${newFlag ? 'NEW DOWNLOAD' : 'CONTINUE MOST RECENT'}`);
   // paths
-  const outPath = `./${downloadDate}/tables`;
+  // const outPath = `./${downloadDate}/tables`;
   const logPath = `./${downloadDate}/logs`;
   // read files
   const tempoL3 = readJSON(`${downloadDate}/metadata/tempoL3.json`, 'utf8').level3;
   console.log('\x1b[36m%s\x1b[0m', `INFO: tempo level 3 array length = ${tempoL3.length}\n`);
   
-  // get headers array from header file
-  const headersArray = readJSON(`./${downloadDate}/metadata/headers.json`, ';');
+  // // get headers array from header file
+  // const headersArray = readJSON(`./${downloadDate}/metadata/headers.json`, ';');
   // create log files and download files, if new download (newFlag === true)
   if (newFlag) {
     initLogFiles(tempoL3, logPath);

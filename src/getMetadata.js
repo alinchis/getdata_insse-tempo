@@ -113,7 +113,7 @@ module.exports = async (today) => {
 		const batchList = itemsList.splice(0, 10);
 		tempoL3.level3 = tempoL3.level3.concat(await getL3(batchList)
 			.then((res) => {
-				console.log(`L3 download: ${iter}/1324 (probably)`);
+				console.log(`L3 download: ${iter}/1324 (@2019-06-20)`);
 				// fs.appendFileSync(tempoL3File, JSON.stringify(res), 'utf8');
 				return res;
 			})
