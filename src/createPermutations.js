@@ -10,6 +10,7 @@ const queryLimit = 30000;
 // ////////////////////////////////////////////////////////////////////////////////////////////
 // // METHODS
 
+// /////////////////////////////////////////////////////////////////////
 // load table headers from file [tempoL3.json]
 function readFile(filePath) {
   // if file is found in path
@@ -22,44 +23,8 @@ function readFile(filePath) {
   return {};
 };
 
-// get table prefix
-function getTablePrefix(folderPath, item) {
-  // read table ancestors from tempaL1 file
-  const tempoL1 = readFile(`${folderPath}/tempoL1.json`, 'utf8');
-  const ancestors = tempoL1.level1;
-  const tableCode = item.ancestors[3].code;
-  const parentCode = item.ancestors[2].code;
-  const tableIndex = ancestors.filter(item => item.context.code === tableCode)[0].context.name.split(' ')[0].replace('.', '');
-  const ancestorPrefix = ancestors.filter(item => item.context.code === parentCode)[0].context.name.split(' ')[0];
-  const tablePrefix = `${ancestorPrefix}.${tableIndex}`;
-  // return value
-  return tablePrefix;
-};
-
-// get times array
-function getTimesArray(item) {
-  // times intervals array
-  const timesArr = ['Luni', 'Trimestre', 'Perioade'];
-  // filter only years column
-  const yearsColumn = item.dimensionsMap.filter((column) => column.label === 'Ani')[0];
-  // if years column is found
-  if (yearsColumn) {
-    return yearsColumn.options.map(item => item.label);
-  // if years column is not found
-  } else {
-    // search for other times intervals
-    const timesColumn = item.dimensionsMap.filter((column) => timesArr.includes(column.label))[0];
-    if (timesColumn) {
-      return timesColumn.options.map(item => item.label);
-    // if column is not found in times intervals array, print table info, for manual check only
-    } else {
-      console.log(`${item.tableName}::${item.periodicitati}`);
-      return ['', ''];
-    }
-  };
-};
-
-// create array for column given
+// /////////////////////////////////////////////////////////////////////
+// create array of groups for column given
 function groupColumnItems(column, parenthood, limit) {
   // create a work array
   let workColumn = column;
@@ -160,6 +125,7 @@ function groupColumnItems(column, parenthood, limit) {
   return { returnArr, newLimit };
 };
 
+// /////////////////////////////////////////////////////////////////////
 // build permutations
 function buildPermutations(outPath, table, limit) {
   const tableName = table.tableName;
@@ -332,8 +298,8 @@ function buildPermutations(outPath, table, limit) {
   // open write file
   const outStream = fs.createWriteStream(`${outPath}/${table.tableName}.csv`);
   // write to file
-  permutations.forEach((perm) => {
-    outStream.write(`${JSON.stringify(perm)}\n`);
+  permutations.forEach((perm, index) => {
+    outStream.write(`${index + 1}#${JSON.stringify(perm)}\n`);
   })
   
   // close write stream
@@ -344,6 +310,7 @@ function buildPermutations(outPath, table, limit) {
 // ////////////////////////////////////////////////////////////////////////////////////////////
 // // EXPORTS
 module.exports = async (downloadDate) => {
+  console.log('\x1b[34m%s\x1b[0m', `PROGRESS: Create Permutations Tables\n`);
   // save path
   const inPath = `./${downloadDate}/metadata`;
   const outPath = `./${downloadDate}/permutations`;

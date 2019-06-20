@@ -8,8 +8,10 @@ const axios = require('axios');
 // /////////////////////////////////////////////////////////////////////////////
 // // EXPORTS
 
+// /////////////////////////////////////////////////////////////////////
 // // get metadata from INSSE-Tempo server and save it in JSON files
 module.exports = async (today) => {
+	console.log('\x1b[34m%s\x1b[0m', `PROGRESS: Download Metadata`);
 	
 	console.log('@INSSE::Tempo import started ... ');
 	// declare variables
@@ -23,7 +25,7 @@ module.exports = async (today) => {
 	const tempoL2 = { level2: [] };
 	const tempoL3 = { level3: [] };
 
-
+	// /////////////////////////////////////////////////////////////////////
 	// // get tempo Level 1: Chapters + Sections
 	await axios.get(tempoL1Path)
 		.then((response) => {
@@ -31,10 +33,10 @@ module.exports = async (today) => {
 		})
 		.catch(err => console.log(err));
 	console.log(`@INSSE::Level 1: tempoL1.json - ${tempoL1.level1.length} items`)
-	fs.writeFile(tempoL1File, JSON.stringify(tempoL1), 'utf8', () => console.log(`@INSSE::Level 1: File tempoL1.json closed: ${tempoL1.level1.length} items`));
+	fs.writeFileSync(tempoL1File, JSON.stringify(tempoL1), 'utf8', () => console.log(`@INSSE::Level 1: File tempoL1.json closed: ${tempoL1.level1.length} items`));
 	console.log('@INSSE::Leves 1: Done');
 
-
+	// /////////////////////////////////////////////////////////////////////
 	// // get tempo Level 2: Sub-Sections
 	// create items list
 	const l1list = tempoL1.level1.filter(item => item.level === 2);
@@ -51,15 +53,18 @@ module.exports = async (today) => {
 			}),
 		);
 	}
+
+	// /////////////////////////////////////////////////////////////////////
 	// run function
 	tempoL2.level2 = await getL2(l1list)
 		.then(res => res)
 		.catch(err => console.log(err));
 	// write to file
-	fs.writeFile(tempoL2File, JSON.stringify(tempoL2), 'utf8', () => console.log(`@INSSE::Level 2: File tempoL2.json closed: ${tempoL2.level2.length} items`));
+	fs.writeFileSync(tempoL2File, JSON.stringify(tempoL2), 'utf8', () => console.log(`@INSSE::Level 2: File tempoL2.json closed: ${tempoL2.level2.length} items`));
 	console.log('@INSSE::Level 2: Done');
 
 
+	// /////////////////////////////////////////////////////////////////////
 	// // get tempo Level 3: Tables interface
 	// create tables list by concatenating the children attributes together
 	let l2list = [];
@@ -69,6 +74,8 @@ module.exports = async (today) => {
 	});
 
 	console.log('@INSSE::Level 3: L2 list - ', l2list.length);
+
+	// /////////////////////////////////////////////////////////////////////
 	// declare query function
 	async function getL3(list) {
 		return Promise.all(
@@ -79,13 +86,24 @@ module.exports = async (today) => {
 					.then((response) => {
 						// console.log(response.data);
 						const record = response.data;
+						// insert table name
 						record.tableName = item.code;
+						// prepare table prefix
+						const ancestors = tempoL1.level1;
+						const tableCode = record.ancestors[3].code;
+						const parentCode = record.ancestors[2].code;
+						const tableIndex = ancestors.filter(item => item.context.code === tableCode)[0].context.name.split(' ')[0].replace('.', '');
+						const ancestorPrefix = ancestors.filter(item => item.context.code === parentCode)[0].context.name.split(' ')[0];
+						// insert table prefix
+						record.tablePrefix = `${ancestorPrefix}.${tableIndex}`;
 						return record;
 					})
 					.catch(err => console.log(err));
 			}),
 		);
 	}
+
+	// /////////////////////////////////////////////////////////////////////
 	// run function
 	const itemsList = l2list;
 	let iter = 0;
@@ -103,5 +121,5 @@ module.exports = async (today) => {
 	}
 	console.log('@INSSE:Level 3: Done reading from source');
 	// write to file
-	fs.writeFile(tempoL3File, JSON.stringify(tempoL3), 'utf8', () => console.log(`@INSSE::Level 3: File tempoL3.json closed: ${tempoL3.level3.length} items`));
+	fs.writeFileSync(tempoL3File, JSON.stringify(tempoL3), 'utf8', () => console.log(`@INSSE::Level 3: File tempoL3.json closed: ${tempoL3.level3.length} items`));
 }

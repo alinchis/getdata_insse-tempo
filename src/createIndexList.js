@@ -3,8 +3,6 @@
 // import libraries
 const fs = require('fs');
 
-// paths
-
 
 // ////////////////////////////////////////////////////////////////////////////////////////////
 // // METHODS
@@ -107,11 +105,12 @@ function getGranularity(tableName) {
 // ////////////////////////////////////////////////////////////////////////////////////////////
 // // EXPORTS
 module.exports = async (downloadDate) => {
+  console.log('\x1b[34m%s\x1b[0m', `PROGRESS: Create Index Table\n`);
   // save path
   const folderPath = `./${downloadDate}/metadata`;
   // read file
   const tempoL3 = readFile(`${folderPath}/tempoL3.json`, 'utf8').level3;
-  console.log('\x1b[34m%s\x1b[0m', `INFO: tempo level 3 array length = ${tempoL3.length}\n`);
+  console.log('\x1b[36m%s\x1b[0m', `INFO: tempo level 3 array length = ${tempoL3.length}\n`);
   // process array
   // console.log(tempoL3[0]);
   const indexArr = [];
@@ -129,7 +128,7 @@ module.exports = async (downloadDate) => {
     'data-granularity',
     'table-title',
   ];
-  console.log('\x1b[34m%s\x1b[0m', `INFO: Write header to new Array`);
+  console.log('\x1b[34m%s\x1b[0m', `PROGRESS: Write header to new Array`);
   indexArr.push(arrHeader.join(';'));
   // for each item in tempo level 3 array
   tempoL3.forEach((item) => {
@@ -158,11 +157,7 @@ module.exports = async (downloadDate) => {
     // add new line to new table
     indexArr.push(newLine.join(';'));
   });
-  // write file
-  // console.log(indexArr);
-  console.log('\x1b[34m%s\x1b[0m', `INFO: Write new Array to file`);
-  const outStream = fs.createWriteStream(`${folderPath}/indexList.csv`);
-  outStream.write(indexArr.join('\n'));
-  outStream.end();
-  console.log('\x1b[34m%s\x1b[0m', `INFO: Write 'indexList.csv' done!`);
+
+  // write to file
+	fs.writeFileSync(`${folderPath}/indexList.csv`, indexArr.join('\n'), 'utf8', () => console.log('\x1b[36m%s\x1b[0m', `INFO: Write 'indexList.csv' DONE!`));
 };
