@@ -18,6 +18,7 @@ const permutationsFolder = 'permutations';
 // ////////////////////////////////////////////////////////////////////////////
 // // METHODS
 
+// /////////////////////////////////////////////////////////////////////
 // load table headers from file [tempoL3.json]
 function readFile(filePath) {
   // if file is found in path
@@ -34,6 +35,7 @@ function readFile(filePath) {
 // ////////////////////////////////////////////////////////////////////////////
 // helper functions
 
+// /////////////////////////////////////////////////////////////////////
 // create download folder
 function createFolder(folderName) {
   if (!fs.existsSync(folderName)){
@@ -44,6 +46,7 @@ function createFolder(folderName) {
   }
 };
 
+// /////////////////////////////////////////////////////////////////////
 // remove download folder and any files inside
 function removeFolder(folderName) {
   if (fs.existsSync(folderName)){
@@ -58,6 +61,7 @@ function removeFolder(folderName) {
   }
 };
 
+// /////////////////////////////////////////////////////////////////////
 // init sub-folders for new download
 function initFolders(today) {
   // create current date root folder
@@ -72,6 +76,7 @@ function initFolders(today) {
   createFolder(`${today}/${permutationsFolder}`);
 }
 
+// /////////////////////////////////////////////////////////////////////
 // get current date - formated
 function getCurrentDate() {
   const today = new Date().toISOString();
@@ -80,6 +85,7 @@ function getCurrentDate() {
   return today.match(regex)[0];
 };
 
+// /////////////////////////////////////////////////////////////////////
 // get most recent download folder
 function getRecentFolder(today) {
   // create folder pattern
@@ -102,6 +108,7 @@ function getRecentFolder(today) {
   };
 };
 
+// /////////////////////////////////////////////////////////////////////
 // check if metadata files are present in download folder
 function checkMetadata(today) {
   console.log('\x1b[34m%s\x1b[0m', `PROGRESS: checking metadata ...\n`);
@@ -131,6 +138,7 @@ function checkMetadata(today) {
   };
 };
 
+// /////////////////////////////////////////////////////////////////////
 // check if index list exists
 function checkIndexList(today) {
   console.log('\x1b[34m%s\x1b[0m', `PROGRESS: checking index list ...\n`);
@@ -156,6 +164,7 @@ function checkIndexList(today) {
   };
 };
 
+// /////////////////////////////////////////////////////////////////////
 // check if headers file exists
 function checkHeaders(today) {
   console.log('\x1b[34m%s\x1b[0m', `PROGRESS: checking headers file ...\n`);
@@ -181,6 +190,7 @@ function checkHeaders(today) {
   };
 };
 
+// /////////////////////////////////////////////////////////////////////
 // check if permutations are present for all tables
 function checkPermutations(currentDate) {
   console.log('\x1b[34m%s\x1b[0m', `PROGRESS: checking permutations ...\n`);
@@ -212,6 +222,7 @@ function checkPermutations(currentDate) {
   };
 };
 
+// /////////////////////////////////////////////////////////////////////
 // check if logs are present for all tables
 function checkLogs(currentDate) {
   console.log('\x1b[34m%s\x1b[0m', `PROGRESS: checking logs ...\n`);
@@ -243,10 +254,36 @@ function checkLogs(currentDate) {
   };
 };
 
+// /////////////////////////////////////////////////////////////////////
+// create log files for all tables
+function initLogFiles(downloadDate) {
+  console.log('\x1b[34m%s\x1b[0m', `\nPROGRESS: Create Logs Files`);
+  const inPath = `${downloadDate}/${metadataFolder}/tempoL3.json`;
+  const outPath = `${downloadDate}/${logsFolder}`;
+  // create header arary
+  const headerArr = ['permutation', 'status', 'message'];
+  // if source file exists
+  if (fs.existsSync(inPath)){
+    // load source file
+    const tables = readFile(inPath).level3;
+    // for each table
+    tables.forEach((table) => {
+      // write to file
+      fs.writeFileSync(`${outPath}/${table.tableName}.csv`, `${headerArr.join(',')}\n`, 'utf8', () => {
+      });
+    });
+  } else {
+    console.log('\x1b[36m%s\x1b[0m', `INFO: Source file does not exist!\n`);
+    throw new Error('@initLogFiles :: Source file not found!');
+  };
+  console.log('\x1b[36m%s\x1b[0m', `INFO: log files created!`);
+};
+
 
 // ////////////////////////////////////////////////////////////////////////////
 // // MENU functions
 
+// /////////////////////////////////////////////////////////////////////
 // start new download
 async function newDownload(today, tablesArr) {
   console.log('\x1b[34m%s\x1b[0m', `PROGRESS: New download started!\n`);
@@ -263,10 +300,13 @@ async function newDownload(today, tablesArr) {
   await createHeaders(today);
   // for each item in index list create query permutations
   await createPermutations(today);
+  // init log files
+  initLogFiles(today);
   // start downloads
   downloadTables(today, tablesArr, true);
 };
 
+// /////////////////////////////////////////////////////////////////////
 // continue most recent download
 async function continueDownload(today, tablesArr) {
   console.log('\x1b[34m%s\x1b[0m', `PROGRESS: Continue most recent download\n`);
@@ -338,6 +378,7 @@ function main() {
   // if argument is missing, -h is set by default
   const mainArg = process.argv[2] || '-h';
   const tablesList = {
+      // 'AGR202A': [],
       // 'INO101G': [],
       // 'INT109A': [],
       // 'POP105A': [],

@@ -27,6 +27,7 @@ module.exports = async (today) => {
 
 	// /////////////////////////////////////////////////////////////////////
 	// // get tempo Level 1: Chapters + Sections
+	console.log('@INSSE::Level 1: START >>>');
 	await axios.get(tempoL1Path)
 		.then((response) => {
 			tempoL1.level1 = response.data;
@@ -43,16 +44,30 @@ module.exports = async (today) => {
 	console.log('@INSSE::Level 2: L1 list - ', l1list.length);
 	// declare query function
 	async function getL2(list) {
-		return Promise.all(
-			list.map(async (item) => {
-				const tempoL2Path = tempoL1Path + item.context.code;
-				// console.log(tempoL2Path)
-				return axios.get(tempoL2Path)
-					.then(response => response.data)
-					.catch(err => console.log(err));
-			}),
-		);
-	}
+		console.log('@INSSE::Level 2: START >>>');
+		// return Promise.all(
+		// 	list.map(async (item) => {
+		// 		const tempoL2Path = tempoL1Path + item.context.code;
+		// 		// console.log(tempoL2Path)
+		// 		return axios.get(tempoL2Path)
+		// 			.then(response => response.data)
+		// 			.catch(err => console.log(err));
+		// 	}),
+		// ).catch(err => console.log(err));
+		// redone requests with for loop, server did not response
+		// possibly, there are new rules implemented on server
+		const responseArr = [];
+		for (item of list) {
+			// console.log(item);
+			const tempoL2Path = tempoL1Path + item.context.code;
+			responseArr.push(await axios.get(tempoL2Path)
+				.then(response => response.data)
+				.catch(err => console.log(err))
+			)
+		};
+		// console.log(responseArr);
+		return responseArr;
+	};
 
 	// /////////////////////////////////////////////////////////////////////
 	// run function
@@ -72,7 +87,7 @@ module.exports = async (today) => {
 		// console.log(item.children);
 		l2list = l2list.concat(item.children);
 	});
-
+	console.log('@INSSE::Level 3: START >>>');
 	console.log('@INSSE::Level 3: L2 list - ', l2list.length);
 
 	// /////////////////////////////////////////////////////////////////////

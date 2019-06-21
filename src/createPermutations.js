@@ -126,6 +126,20 @@ function groupColumnItems(column, parenthood, limit) {
 };
 
 // /////////////////////////////////////////////////////////////////////
+// count expected number of rows
+function countItems(perm) {
+  // if the table has only two columns, return 1
+  // if (perm.length === 2) return 1;
+  let itemCount = 1;
+  for (let i = 0; i < perm.length - 2; i += 1) {
+    itemCount *= perm[i].length;
+  }
+
+  // return count value
+  return itemCount;
+};
+
+// /////////////////////////////////////////////////////////////////////
 // build permutations
 function buildPermutations(outPath, table, limit) {
   const tableName = table.tableName;
@@ -136,7 +150,7 @@ function buildPermutations(outPath, table, limit) {
   let permutations = [];
   const typeArray = [];
   let parenthood = false;
-  let tableType = 'regular';
+  // let tableType = 'regular';
 
   // iterate over array of columns and build the permutations
   columns.reverse().forEach((column, index) => {
@@ -287,24 +301,33 @@ function buildPermutations(outPath, table, limit) {
   });
 
   // determine table type
-  const numOfParents = typeArray.filter(item => item === 'parents').length;
-  if (numOfParents === 1) tableType = 'one-parent';
-  if (numOfParents > 1) tableType = 'multiple-parents';
+  // const numOfParents = typeArray.filter(item => item === 'parents').length;
+  // if (numOfParents === 1) tableType = 'one-parent';
+  // if (numOfParents > 1) tableType = 'multiple-parents';
 
   // return permutations array
   console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
   // console.log(permutations[0]);
   // return { permutations, tableType };
   // open write file
-  const outStream = fs.createWriteStream(`${outPath}/${table.tableName}.csv`);
+  // const outStream = fs.createWriteStream(`${outPath}/${table.tableName}.csv`);
   // write to file
-  permutations.forEach((perm, index) => {
-    outStream.write(`${index + 1}#${JSON.stringify(perm)}\n`);
-  })
+  const writeArr = permutations.map((perm, index) => {
+    const expectedCount = countItems(perm);
+    // const countArr = [];
+    // for (column of perm) {
+    //   countArr.push(column.length);
+    // };
+    // console.log(`${table.tableName} :: permutation index = ${index} >>> ${countArr} items // ${expectedCount}`);
+    // outStream.write(`${index}#${expectedCount}#${JSON.stringify(perm)}\n`);
+    return `${index}#${expectedCount}#${JSON.stringify(perm)}`;
+  });
+
+  fs.writeFileSync(`${outPath}/${table.tableName}.csv`, `${writeArr.join('\n')}`);
   
   // close write stream
-  outStream.end();
-}
+  // outStream.end();
+};
 
 
 // ////////////////////////////////////////////////////////////////////////////////////////////
