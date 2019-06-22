@@ -1,0 +1,7 @@
+Tabelele INSSE-Tempo Cluj
+
+1. Din tabelele /indicatorii INSSE-Tempo Romania, am selectionat indicatorii cu date la nivel de localitate (83 tabele, la data 2019-06-21).
+2. Din cele 83 de tabele, am extras doar datele referitoare la judetul Cluj.
+3. Tabelele sunt salvate in fisiere text, format CSV, cu caracter delimitator ';'.
+5. Codul SIRUTA este salvat pe coloana separata.
+6. Procesarile s-au realizat automat, daca gasiti erori, va rog sa ma anuntati.

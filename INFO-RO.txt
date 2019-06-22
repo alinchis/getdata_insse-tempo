@@ -1,0 +1,8 @@
+Tabelele INSSE-Tempo Romania
+
+1. Am descarcat aproape toate tabelele /indicatorii din baza de date INSSE-Tempo (1323/1324 tabele total, la data 2019-06-21), mai putin tabelul A.6.2. PNS101B, server-ul emite eroare la solicitarea datelor.
+2. Descarcarea s-a realizat automat, iar verificarea corectiei datelor s-a facut prin sondaj. In caz ca descoperiti erori, va rog sa ma anuntati.
+3. Tabelele sunt salvate in fisiere text, format CSV, cu caracter delimitator ';'.
+4. Am eliminat din text spatii multiple si spatii din jurul caracterului '-'.
+5. Nu au fost operate alte modificari ale datelor descarcate.
+6. Tabelele /indicatorii care contin date la nivel de localitate au codul SIRUTA inclus in celula numelui localitatii.

@@ -318,15 +318,15 @@ async function continueDownload(today, tablesArr) {
     // // the stge of downloads
     // check for metadata files
     if (!checkMetadata(currentDownloadFolder)) {
-      // await getMetadata(currentDownloadFolder);
+      await getMetadata(currentDownloadFolder);
     };
     // check for index list
     if (!checkIndexList(currentDownloadFolder)) {
-      // await createIndexList(currentDownloadFolder);
+      await createIndexList(currentDownloadFolder);
     };
     // check for headers file
     if (!checkHeaders(currentDownloadFolder)) {
-      // await createHeaders(currentDownloadFolder);
+      await createHeaders(currentDownloadFolder);
     };
     // check permutations
     if (!checkPermutations(currentDownloadFolder)) {
@@ -337,9 +337,9 @@ async function continueDownload(today, tablesArr) {
     if (!checkLogs(currentDownloadFolder)) {
       console.log('logs are missing');
       // // delete logs folder
-      // removeFolder(`${currentDownloadFolder}/${logsFolder}`);
+      removeFolder(`${currentDownloadFolder}/${logsFolder}`);
       // // create new logs folder
-      // createFolder(`${currentDownloadFolder}/${logsFolder}`);
+      createFolder(`${currentDownloadFolder}/${logsFolder}`);
       // start new download
       downloadTables(currentDownloadFolder, tablesArr, true)
     // // if all logs are present, continue download
