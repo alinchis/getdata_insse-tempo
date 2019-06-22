@@ -484,8 +484,8 @@ async function getTableData(downloadDate, table, permutation, permutationsTotal,
     } catch(err) {
       console.log('\x1b[31m%s\x1b[0m', `${table.tablePrefix} ${table.tableName} :: ${permutation[0]}/${permutationsTotal}  @getTableData >>> try branch ERROR`);
       // save error to log
-      const messageArr = [permutationIndex, 'ERROR', `try branch ERROR: ${err.message}`];
-      appendLog(downloadDate, tableName, `${messageArr.join(',')}\n`);
+      const messageArr = [permutation[0], 'ERROR', `try branch ERROR: ${err.message}`];
+      appendLog(downloadDate, table.tableName, `${messageArr.join(',')}\n`);
       console.log(err);
       if (err.code === 'ECONNREFUSED') throw new Error('ECONNREFUSED');
       return err.data;
@@ -622,6 +622,9 @@ module.exports =  (downloadDate, tablesArray, newFlag) => {
   // read files
   const tempoL3 = readJSON(`${downloadDate}/metadata/tempoL3.json`, 'utf8').level3;
   console.log('\x1b[36m%s\x1b[0m', `INFO: tempo level 3 array length = ${tempoL3.length}\n`);
+
+  // test
+  // console.log(tempoL3.filter(table => table.tableName === 'POP206E')[0].dimensionsMap);
 
   // download tables from tablesArray
   downloadTables(downloadDate, tempoL3, tablesArray);

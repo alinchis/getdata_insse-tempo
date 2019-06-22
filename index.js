@@ -290,11 +290,11 @@ async function newDownload(today, tablesArr) {
 
   // remove current date folder, if exists
   fs.removeSync(today);
-  // initiate new folders
+  // // initiate new folders
   initFolders(today);
-  // get metadata
+  // // get metadata
   await getMetadata(today);
-  // create index list
+  // // create index list
   await createIndexList(today);
   // create headers for all tables
   await createHeaders(today);
@@ -318,15 +318,15 @@ async function continueDownload(today, tablesArr) {
     // // the stge of downloads
     // check for metadata files
     if (!checkMetadata(currentDownloadFolder)) {
-      await getMetadata(currentDownloadFolder);
+      // await getMetadata(currentDownloadFolder);
     };
     // check for index list
     if (!checkIndexList(currentDownloadFolder)) {
-      await createIndexList(currentDownloadFolder);
+      // await createIndexList(currentDownloadFolder);
     };
     // check for headers file
     if (!checkHeaders(currentDownloadFolder)) {
-      await createHeaders(currentDownloadFolder);
+      // await createHeaders(currentDownloadFolder);
     };
     // check permutations
     if (!checkPermutations(currentDownloadFolder)) {
@@ -336,10 +336,10 @@ async function continueDownload(today, tablesArr) {
     // // if logs are not present start new download
     if (!checkLogs(currentDownloadFolder)) {
       console.log('logs are missing');
-      // delete logs folder
-      removeFolder(`${currentDownloadFolder}/${logsFolder}`);
-      // create new logs folder
-      createFolder(`${currentDownloadFolder}/${logsFolder}`);
+      // // delete logs folder
+      // removeFolder(`${currentDownloadFolder}/${logsFolder}`);
+      // // create new logs folder
+      // createFolder(`${currentDownloadFolder}/${logsFolder}`);
       // start new download
       downloadTables(currentDownloadFolder, tablesArr, true)
     // // if all logs are present, continue download

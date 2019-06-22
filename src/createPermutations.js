@@ -25,9 +25,9 @@ function readFile(filePath) {
 
 // /////////////////////////////////////////////////////////////////////
 // create array of groups for column given
-function groupColumnItems(column, parenthood, limit) {
+function groupColumnItems(index, column, parenthood, limit) {
   // create a work array
-  let workColumn = column;
+  let workColumn = column.slice();
   let newLimit = 0;
   // console.log('@group::workColumn: ', workColumn);
   console.log('\x1b[34m%s\x1b[0m', '\n@groupColumnItems >>>>>>>');
@@ -40,12 +40,15 @@ function groupColumnItems(column, parenthood, limit) {
     values: [],
     dependent: false,
   };
+
+  // /////////////////////////////////////////////////////
   // check if current column has dependency
   returnArr.dependent = workColumn[0].parentId !== null;
   console.log('@group::dependent = ', returnArr.dependent);
   // check if current column is parent
   // console.log('parenthood = ', parenthood);
 
+  // /////////////////////////////////////////////////////
   // if column has children items and items are not also parents
   if (returnArr.dependent && !parenthood) {
     console.log('\x1b[36m%s\x1b[0m', '@group:: children branch');
@@ -88,7 +91,7 @@ function groupColumnItems(column, parenthood, limit) {
     // console.log(returnArr.values);
 
     // // if query limit is not reached, make one array with all items
-  } else if (limit > column.length) {
+  } else if (limit >= column.length) {
     console.log('\x1b[36m%s\x1b[0m', '@group:: limit > column.length branch');
     // a column selection can hold max 500 items
     if (column.length > 500) {
@@ -155,7 +158,7 @@ function buildPermutations(outPath, table, limit) {
   // iterate over array of columns and build the permutations
   columns.reverse().forEach((column, index) => {
     // for each column return items grouped
-    const groupedColumn = groupColumnItems(column.options, parenthood, workLimit);
+    const groupedColumn = groupColumnItems(index, column.options, parenthood, workLimit);
     console.log(`@build:: column: ${index}   >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>`);
     // console.log(groupedColumn.returnArr.values);
 
@@ -178,6 +181,7 @@ function buildPermutations(outPath, table, limit) {
     }
 
     // create permutation array
+    // if culumn type is 'parents'
     if (groupedColumn.returnArr.type === 'parents') {
       console.log('\n@build:: parents branch');
 
@@ -295,9 +299,9 @@ function buildPermutations(outPath, table, limit) {
     }
 
     // save new Permutations to stable permutations
-    permutations = newPermutations;
+    permutations = newPermutations.slice();
     console.log(`@build ${index}::permutations >>> DONE`);
-    // console.log(permutations);
+    // console.log(JSON.stringify(permutations));
   });
 
   // determine table type
