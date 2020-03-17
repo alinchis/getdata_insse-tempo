@@ -572,7 +572,8 @@ async function downloadTables(downloadDate, tempoL3, tablesList) {
   // get finished tables from tables log
   // read files
   const completedLogPath = `./${downloadDate}/logs/tablesProgress.csv`;
-  const completedTables = [];
+  // create an empty table, add tableNames to skip downloading!!
+  const completedTables = []; // add tables names to skip
   // if completed log file exists
   if (fs.existsSync(completedLogPath)) {
     // return parsed file
@@ -611,7 +612,7 @@ async function downloadTables(downloadDate, tempoL3, tablesList) {
     }
   }
 
- };
+};
 
 
 // ////////////////////////////////////////////////////////////////////////////////////////////

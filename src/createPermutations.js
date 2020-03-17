@@ -4,7 +4,8 @@
 const fs = require('fs');
 
 // local values
-const queryLimit = 30000;
+const queryLimit = 30000; // default 30000, for PNS101B = 100
+const columnLimit = 500;  // default 500,  for PNS101B = 20
 
 
 // ////////////////////////////////////////////////////////////////////////////////////////////
@@ -94,11 +95,11 @@ function groupColumnItems(index, column, parenthood, limit) {
   } else if (limit >= column.length) {
     console.log('\x1b[36m%s\x1b[0m', '@group:: limit > column.length branch');
     // a column selection can hold max 500 items
-    if (column.length > 500) {
-      for (let i = 0, j = workColumn.length; i < j; i += 500) {
-        returnArr.values.push(workColumn.splice(0, 500));
+    if (column.length > columnLimit) {
+      for (let i = 0, j = workColumn.length; i < j; i += columnLimit) {
+        returnArr.values.push(workColumn.splice(0, columnLimit));
       }
-      newLimit = Math.floor(limit / 500);
+      newLimit = Math.floor(limit / columnLimit);
     } else {
       returnArr.values = [workColumn];
       newLimit = Math.floor(limit / column.length);

@@ -382,6 +382,7 @@ function main() {
       // 'INO101G': [],
       // 'INT109A': [],
       // 'POP105A': [],
+      // 'PNS101B': [], // error 500, does not work with usual permutations settings
     };
 
   // run requested command
