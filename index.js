@@ -366,7 +366,8 @@ function main() {
   1. -h : display help text\n\
   2. -d : start new download\n\
           !!! removes all files and folders in the current date: \'${today}\' folder\n\
-  3. -c : continue the most recent download\n`;
+  3. -c : continue the most recent download\n
+  4. -i [download date, ex: 2020-01-19]: create index list file for given date\n`;
 
   // get command line arguments
   const arguments = process.argv;
@@ -377,12 +378,18 @@ function main() {
   // get third command line argument
   // if argument is missing, -h is set by default
   const mainArg = process.argv[2] || '-h';
+  const secondArg = process.argv[3] || '';
   const tablesList = {
       // 'AGR202A': [],
       // 'INO101G': [],
       // 'INT109A': [],
       // 'POP105A': [],
       // 'PNS101B': [], // error 500, does not work with usual permutations settings
+      // 'ACC101A': [], // multiple errors (1. header error; 2. cells contain separator character)
+      // 'POP212D': [], // 1. header error: the first column is set 'UM' wrongfully
+      // 'POP212C': [], // no error, for testing against POP212D
+      // 'EXP101A': [], // multiple UM all valid
+      'POP107D': [],
     };
 
   // run requested command
@@ -399,6 +406,11 @@ function main() {
   } else if (mainArg === '-c') {
     // continue most recent download
     continueDownload(today, tablesList);
+
+  // 4. else if argument is 'i'
+  } else if (mainArg === '-i' && secondArg != '') {
+    // create index list file for given date
+    createIndexList(secondArg);
 
     // else print help
   } else {

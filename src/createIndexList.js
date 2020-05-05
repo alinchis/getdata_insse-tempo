@@ -137,7 +137,7 @@ module.exports = async (downloadDate) => {
     // // table prefix
     newLine.push(getTablePrefix(folderPath, item));
     // // table ancestor level 1
-    newLine.push(item.ancestors[1].name.split(' ')[1]);
+    newLine.push(item.ancestors[1].name.split('.')[1].trim());
     // // table ancestor level 2
     newLine.push(item.ancestors[2].name);
     // // table ancestor level 3

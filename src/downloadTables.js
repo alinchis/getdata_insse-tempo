@@ -5,10 +5,8 @@ const fs = require('fs-extra');
 const axios = require('axios');
 const cheerio = require('cheerio');
 
-const RateLimiter = require('limiter').RateLimiter;
-// Allow 150 requests per hour (the Twitter search limit). Also understands
-// 'second', 'minute', 'day', or a number of milliseconds
-const limiter = new RateLimiter(1, 'second');
+// global variables
+const csvDelimiter = '#';
 
 // paths
 const requestPath = 'http://statistici.insse.ro:8077/tempo-ins/matrix';
@@ -45,34 +43,6 @@ function readCSV(filePath, delimiter) {
 };
 
 // /////////////////////////////////////////////////////////////////////
-// create log files for all tables
-function initLogFiles(tables, logPath) {
-  console.log('\x1b[34m%s\x1b[0m', `\nPROGRESS: Create Logs Files`);
-  const headerArr = ['permutation', 'status', 'message'];
-  tables.forEach((table) => {
-    // write to file
-    fs.writeFileSync(`${logPath}/${table.tableName}.csv`, `${headerArr.join(',')}\n`, 'utf8', () => {
-      return true;
-    });
-  });
-  console.log('\x1b[36m%s\x1b[0m', `INFO: log files created!`);
-};
-
-// /////////////////////////////////////////////////////////////////////
-// create download files for all tables
-function initDownloadFiles(headersArray, outPath) {
-  console.log('\x1b[34m%s\x1b[0m', `\nPROGRESS: Create Download Files`);
-  headersArray.forEach((item) => {
-    const tableName = item.tableName;
-    const tableHeader = `${item.keysArray.join(';')};${item.timesArray.join(';')};UM\n`;
-    // write to file
-    fs.writeFileSync(`${outPath}/${tableName}.csv`, tableHeader, 'utf8', () => {
-      console.log('\x1b[36m%s\x1b[0m', `${item.tablePrefix}.${tableName} : download file created!`);
-    });
-  });
-};
-
-// /////////////////////////////////////////////////////////////////////
 // create POST body
 function createPostBody(header, permutation) {
   const postBody = {};
@@ -82,38 +52,6 @@ function createPostBody(header, permutation) {
   postBody.matrixDetails = header.details;
   // return POST body
   return postBody;
-};
-
-// /////////////////////////////////////////////////////////////////////
-// for given table with permutations, request data from server
-async function postRequest(downloadDate, table, permutationIndex, permutationsTotal, postBody) {
-  const resData = await axios.post(reqPath, postBody);
-  console.log('\x1b[33m%s\x1b[0m', `${table.tablePrefix}.${table.tableName} :: ${permutationIndex}/${permutationsTotal} >>> RESPONSE arrived`);
-  // test response data contains data
-  if (resData.data != null) {
-    const testData = testForData(table.tablePrefix, table.tableName, permutationIndex, permutationsTotal, resData.data);
-    // if response has data, extract data from html
-    if (testData) {
-      // set retry flag to false
-      retryFlag = false;
-      // /////////////////////////////////
-      // return data extracted from html
-      return extractData(table.tablePrefix, table.tableName, permutationIndex, permutationsTotal, resData.data);
-      // return resData.data;
-    // response has no data branch
-    } else {
-      console.log('\x1b[31m%s\x1b[0m', `${table.tablePrefix}.${table.tableName} :: ${permutationIndex}/${permutationsTotal} >>> ERROR: postData returns NO DATA`);
-      // save error to log
-      const errMessageArr = [permutationIndex, 'ERROR', 'postData returns no data'];
-      appendLog(downloadDate, table.tableName, `${errMessageArr.join(',')}\n`);
-    };
-  // response is undefined
-  } else {
-    console.log('\x1b[31m%s\x1b[0m', `${table.tablePrefix}.${table.tableName} :: ${permutationIndex}/${permutationsTotal} >>> ERROR: postData returns "undefined"`);
-    // save error to log
-    const errMessageArr = [permutationIndex, 'ERROR', 'postData returns \"undefined\"'];
-    appendLog(downloadDate, table.tableName, `${errMessageArr.join(',')}\n`);
-  };
 };
 
 // /////////////////////////////////////////////////////////////////////
@@ -144,13 +82,6 @@ function testForData(tablePrefix, tableName, permutationIndex, permutationsTotal
   }
   // return result
   return test;
-};
-
-// /////////////////////////////////////////////////////////////////////
-// calculate the permutations that are not in the logs
-function getArraysDiff(source, target) {
-  // return array of items that are in source array but not in target array
-  return source.filter(item => !target.includes(item[0]));
 };
 
 // /////////////////////////////////////////////////////////////////////
@@ -246,7 +177,7 @@ function extractData1(tablePrefix, tableName, permutationIndex, permutationsTota
   // select all 'tr' elements
   const trArray = $('tr');
   console.log('\x1b[33m%s\x1b[0m', `${tablePrefix}.${tableName} :: ${permutationIndex}/${permutationsTotal} >>> trArray.length = ${trArray.length}\n`);
-  // there are two types of return tables
+  // there are multiple types of return tables
   // check which kind by verifying the presence of UM column in keys header array / trArray[1]
   const keysArray = [];
   $(trArray).eq(1).children().each((i, item) => {
@@ -297,32 +228,6 @@ function extractData1(tablePrefix, tableName, permutationIndex, permutationsTota
     tableInfo,
     tableHeader,
   };
-  
-  // // if table is of type A
-  // if (tableType === 'A') {
-  //   return {
-  //     tableInfo,
-  //     tableHeader,
-  //     returnArray: extractDataA(tablePrefix, tableName, 0, permutationsTotal, resData, kArrLength, umValue)
-  //   }; 
-
-  // // else, if table is of type B
-  // } else if (tableType === 'B') {
-  //   return {
-  //     tableInfo,
-  //     tableHeader,
-  //     returnArray: extractDataB(tablePrefix, tableName, 0, permutationsTotal, resData)
-  //   };
-
-  // } else {
-  //   // throw error
-  //   console.log(`ERROR: table ${tablePrefix}.${tableName} does not fit into type A or B\n`);
-  //   throw new Error(`table ${tablePrefix}.${tableName} does not fit into type A or B\n`);
-  // }
-
-  // console.log(returnArray);
-  // retrun array for current permutation
-  // return {tableInfo, tableHeader, returnArray };
 };
 
 // /////////////////////////////////////////////////////////////////////
@@ -357,7 +262,7 @@ function extractDataA(tablePrefix, tableName, permutation, permutationsTotal, re
       // insert UM value into row array
       rowArray.splice(kArrLength - 1, 0, umValue);
       // add current row to return array
-      returnArray.push(`${rowArray.join(';')}`);
+      returnArray.push(`${rowArray.join(csvDelimiter)}`);
   });
 
   // console.log(returnArray);
@@ -399,7 +304,7 @@ function extractDataB(tablePrefix, tableName, permutation, permutationsTotal, re
         rowArray.push($(cell).text().trim());
       });
       // add current row to return array
-      returnArray.push(`${rowArray.join(';')}`);
+      returnArray.push(`${rowArray.join(csvDelimiter)}`);
   });
 
   // console.log(returnArray);
@@ -535,7 +440,7 @@ async function downloadTable(downloadDate, table, manualPermIndex) {
   console.log('\x1b[33m%s\x1b[0m', `\n${table.tablePrefix}.${table.tableName} :: first permutation >>>>>>>>>>>>>>>>>>>>>>>>>>>`);
   const { tableInfo, tableHeader } = await getTableData(downloadDate, table, permutationsArrayAll[0], permutationsTotal, '', true);
   // add new data to table Data
-  tableData.push(tableHeader.join(';'));
+  tableData.push(tableHeader.join(csvDelimiter));
 
   // get the rest of the data
   // for each batch get data
@@ -603,7 +508,7 @@ async function downloadTables(downloadDate, tempoL3, tablesList) {
   // if the list is empty download all tables
   } else {
      // completed tables are removed from list
-     const tablesArray = tempoL3.filter(item => {
+    const tablesArray = tempoL3.filter(item => {
       return !completedTables.includes(item.tableName);
     });
     console.log(`tablesArray.length = ${tablesArray.length}`);
