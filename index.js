@@ -390,6 +390,7 @@ function main() {
       // 'POP212C': [], // no error, for testing against POP212D
       // 'EXP101A': [], // multiple UM all valid
       'POP107D': [],
+      // 'AGR101A': [], // test '-'
     };
 
   // run requested command

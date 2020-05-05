@@ -6,7 +6,7 @@ const XLSX = require('xlsx');
 const cliProgress = require('cli-progress');
 
 // paths
-const downloadDate = '2020-03-17';
+const downloadDate = '2020-05-05';
 const inPath = `../${downloadDate}`;
 const indexListPath = `${inPath}/metadata/indexList.csv`;
 const tablesPath = `${inPath}/tables`;
@@ -86,7 +86,7 @@ function convertFiles(indexListPath, tablesPath, outPath) {
     if (!fs.existsSync(xlsxFilePath)) {
       // open CSV file
       const csvFilePath = `${tablesPath}/${filesArr[i][4]}.csv`;
-      const csvData = readCSV(csvFilePath, ';');
+      const csvData = readCSV(csvFilePath, '#');
       let newTableData = [];
 
       // if CSV file has 'localitate' level data, split 'Localitati' column into 'SIRUTA' + 'Localitati'

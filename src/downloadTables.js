@@ -124,11 +124,12 @@ function chunkArray(myArray, chunk_size){
   }
 
   return tempArray;
-};
+}
 
 // /////////////////////////////////////////////////////////////////////
 // clean data array
 function cleanData(resArray) {
+  console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> clean data >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
   // resArray is an array of arrays [['item;item;item', 'line2', 'line3', ..],[],..[]]
   let prevLineArr = [];
   // flatted the array to break the array items into items
@@ -137,12 +138,12 @@ function cleanData(resArray) {
     // console.log(line);
     let newLine = line.replace(/\s+/g, ' ').replace(/\s?-\s?/g, '-');
     // break line in array
-    const newArr = newLine.split(';');
+    const newArr = newLine.split(csvDelimiter);
     // if it is the first line, copy current line to prevLineArr
     if (prevLineArr.length === 0) {
       prevLineArr.push(...newArr);
       return line;
-    // else, replace the '-' cells with the correspondig ones from prevLineArr
+    // else, replace the '-' cells with the corresponding ones from prevLineArr
     } else {
       // return new line
       return newArr.map((cell, index) => {
@@ -152,16 +153,16 @@ function cleanData(resArray) {
           return prevLineArr[index];
         // else
         } else {
-          // update correspondig prevLineArr cell
+          // update corresponding prevLineArr cell
           prevLineArr[index] = cell;
           // return the current cell
           return cell;
-        };
-      // return line as ';' separated string
-      }).join(';');
-    };
+        }
+      // return line as csvDelimiter separated string
+      }).join(csvDelimiter);
+    }
   })
-};
+}
 
 // /////////////////////////////////////////////////////////////////////
 // extract data from html for the first item, including tableType and tableHeader
@@ -183,14 +184,14 @@ function extractData1(tablePrefix, tableName, permutationIndex, permutationsTota
   $(trArray).eq(1).children().each((i, item) => {
     keysArray.push($(item).text());
   });
-  console.log(`keysArray: ${keysArray.join(';')}`);
+  console.log(`keysArray: ${keysArray.join(csvDelimiter)}`);
   const kArrLength = keysArray.length;
   console.log(`keysArray.length: ${kArrLength}`);
   const timesArray = [];
   $(trArray).eq(2).children().each((i, item) => {
     timesArray.push($(item).text());
   });
-  console.log(`timesArray: ${timesArray.join(';')}`);
+  console.log(`timesArray: ${timesArray.join(csvDelimiter)}`);
   const umHeaderItem = keysArray[kArrLength -2].toLowerCase();
   console.log(`UM header: ${umHeaderItem}`);
   const tableType = umHeaderItem.includes('um:') || umHeaderItem.includes('unitati de masura') ? 'B' : 'A';
@@ -214,7 +215,7 @@ function extractData1(tablePrefix, tableName, permutationIndex, permutationsTota
   } else {
     // manually add 'UM' column and the times array
     tableHeader.push('UM', ...timesArray);
-  };
+  }
   if (tableType === 'A') {
     // add 'UM' item to header
     tableHeader.splice(kArrLength - 1, 0, 'UM');
@@ -222,13 +223,13 @@ function extractData1(tablePrefix, tableName, permutationIndex, permutationsTota
     umValue = $(trArray).eq(4).children().eq(0).text();
     // update return umValue
     tableInfo.umValue = umValue;
-  };
+  }
 
   return {
     tableInfo,
     tableHeader,
   };
-};
+}
 
 // /////////////////////////////////////////////////////////////////////
 // extract data from html
@@ -272,7 +273,7 @@ function extractDataA(tablePrefix, tableName, permutation, permutationsTotal, re
   console.log(`@extractDataA :: return array length = ${arrayLength} / expected = ${expectedLength}`);
   // retrun array for current permutation
   return returnArray;
-};
+}
 
 // /////////////////////////////////////////////////////////////////////
 // extract data from html
@@ -314,7 +315,7 @@ function extractDataB(tablePrefix, tableName, permutation, permutationsTotal, re
   console.log(`@extractDataB :: return array length = ${arrayLength} / expected = ${expectedLength}`);
   // retrun array for current permutation
   return returnArray;
-};
+}
 
 // /////////////////////////////////////////////////////////////////////
 // download table for query array
@@ -369,7 +370,7 @@ async function getTableData(downloadDate, table, permutation, permutationsTotal,
           } else {
             // throw error
             throw new Error('NO table type');
-          };
+          }
           
           // return resData.data;
         // response has no data branch
@@ -378,14 +379,14 @@ async function getTableData(downloadDate, table, permutation, permutationsTotal,
           // save error to log
           const errMessageArr = [permutation[0], 'ERROR', 'postData returns no data'];
           appendLog(downloadDate, table.tableName, `${errMessageArr.join(',')}\n`);
-        };
+        }
       // response is undefined
       } else {
         console.log('\x1b[31m%s\x1b[0m', `${table.tablePrefix}.${table.tableName} :: ${permutation[0]}/${permutationsTotal} >>> ERROR: postData returns "undefined"`);
         // save error to log
         const errMessageArr = [permutation[0], 'ERROR', 'postData returns \"undefined\"'];
         appendLog(downloadDate, table.tableName, `${errMessageArr.join(',')}\n`);
-      };
+      }
     } catch(err) {
       console.log('\x1b[31m%s\x1b[0m', `${table.tablePrefix} ${table.tableName} :: ${permutation[0]}/${permutationsTotal}  @getTableData >>> try branch ERROR`);
       // save error to log
@@ -394,13 +395,13 @@ async function getTableData(downloadDate, table, permutation, permutationsTotal,
       console.log(err);
       if (err.code === 'ECONNREFUSED') throw new Error('ECONNREFUSED');
       return err.data;
-    };
+    }
 
-  };
+  }
 
   // return array of lines /strings
   return resData;
-};
+}
 
 // /////////////////////////////////////////////////////////////////////
 // download one table
@@ -408,7 +409,7 @@ async function downloadTable(downloadDate, table, manualPermIndex) {
   console.log('\x1b[34m%s\x1b[0m', `\nPROGRESS: Download Table >>> ${table.tablePrefix}.${table.tableName}`);
   
   // get permutations from saved file
-  const permutationsArrayAll = readCSV(`./${downloadDate}/permutations/${table.tableName}.csv`, '#');
+  const permutationsArrayAll = readCSV(`./${downloadDate}/permutations/${table.tableName}.csv`, csvDelimiter);
   const permutationsTotal = permutationsArrayAll.length - 1;
   console.log('\x1b[33m%s\x1b[0m', `\n${table.tablePrefix}.${table.tableName} total permutations = ${permutationsTotal}`);
   // // create query permutation array
@@ -451,7 +452,7 @@ async function downloadTable(downloadDate, table, manualPermIndex) {
     })).catch( e => {
       console.log("ERROR: some Promise is broken in @getTableData", e)
     }));
-  };
+  }
 
   // replace '-' cells with parent data
   // tableData is an array of arrays [['item;item;item', 'line2', 'line3', ..],[],..[]]
@@ -465,7 +466,7 @@ async function downloadTable(downloadDate, table, manualPermIndex) {
   // save log
   console.log('\x1b[33m%s\x1b[0m', `\n${table.tablePrefix}.${table.tableName} :: >>> save LOG`);
   appendCompletedLog(downloadDate, `${table.tableName}\n`);
-};
+}
 
 // /////////////////////////////////////////////////////////////////////
 // download array of tables
@@ -483,7 +484,7 @@ async function downloadTables(downloadDate, tempoL3, tablesList) {
   if (fs.existsSync(completedLogPath)) {
     // return parsed file
     completedTables.push(...fs.readFileSync(completedLogPath, 'utf8').split('\n'));
-  };
+  }
 
   // if a list of table is requested
   if (tablesKeys.length > 0) {
@@ -517,7 +518,7 @@ async function downloadTables(downloadDate, tempoL3, tablesList) {
     }
   }
 
-};
+}
 
 
 // ////////////////////////////////////////////////////////////////////////////////////////////
