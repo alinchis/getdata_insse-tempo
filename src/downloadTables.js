@@ -450,7 +450,7 @@ async function downloadTable(downloadDate, table, manualPermIndex) {
     tableData.push( await Promise.all( batchArray[i].map( async (permutation) => {
       return getTableData(downloadDate, table, permutation, permutationsTotal, tableInfo, false);
     })).catch( e => {
-      console.log("ERROR: some Promise is broken in @getTableData", e)
+      console.log("ERROR: some Promise is broken in @getTableData", e);
     }));
   }
 
@@ -479,7 +479,7 @@ async function downloadTables(downloadDate, tempoL3, tablesList) {
   // read files
   const completedLogPath = `./${downloadDate}/logs/tablesProgress.csv`;
   // create an empty table, add tableNames to skip downloading!!
-  const completedTables = []; // add tables names to skip
+  const completedTables = ['PNS101B']; // add tables names to skip
   // if completed log file exists
   if (fs.existsSync(completedLogPath)) {
     // return parsed file

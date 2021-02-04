@@ -13,6 +13,7 @@ const metadataFolder = 'metadata';
 const tablesFolder = 'tables';
 const logsFolder = 'logs';
 const permutationsFolder = 'permutations';
+const extractsFolder = 'extracts';
 
 
 // ////////////////////////////////////////////////////////////////////////////
@@ -74,6 +75,8 @@ function initFolders(today) {
   createFolder(`${today}/${logsFolder}`);
   // create permutations folder
   createFolder(`${today}/${permutationsFolder}`);
+  // create extracts folder
+  createFolder(`${today}/${extractsFolder}`);
 }
 
 // /////////////////////////////////////////////////////////////////////
@@ -389,7 +392,7 @@ function main() {
       // 'POP212D': [], // 1. header error: the first column is set 'UM' wrongfully
       // 'POP212C': [], // no error, for testing against POP212D
       // 'EXP101A': [], // multiple UM all valid
-      'POP107D': [],
+      // 'POP107D': [],
       // 'AGR101A': [], // test '-'
     };
 

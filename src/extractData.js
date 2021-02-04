@@ -4,7 +4,7 @@
 const fs = require('fs-extra');
 
 // paths
-const downloadDate = '2019-06-21';
+const downloadDate = '2021-02-04';
 const inPath = `../${downloadDate}`;
 const outPath = `../${downloadDate}/extracts`;
 
@@ -20,7 +20,7 @@ function createFolder(folderName) {
   } else {
     console.log('\x1b[31m%s\x1b[0m',`INFO: Folder \"${folderName}\" already exists, skiping ...`);
   }
-};
+}
 
 // /////////////////////////////////////////////////////////////////////
 // load json file
@@ -33,21 +33,63 @@ function readJSON(filePath) {
   // else return empty object
   console.log('\x1b[31m%s\x1b[0m',`ERROR: ${filePath} file NOT found!`);
   return {};
-};
+}
 
 // /////////////////////////////////////////////////////////////////////
 // load csv file
-function readCSV(filePath, delimiter) {
+function readCSV(filePath, delimiter=',') {
   // if file is found in path
   if (fs.existsSync(filePath)) {
     // return parsed file
     const newArray = fs.readFileSync(filePath, 'utf8').split('\n');
-    return newArray.filter(line => line).map(line => line.split(delimiter || ','));
+    return newArray.filter(line => line).map(line => line.replace(/"/gm, '').split(delimiter));
   };
   // else return empty object
   console.log('\x1b[31m%s\x1b[0m',`ERROR: ${filePath} file NOT found!`);
   return [];
-};
+}
+
+// ///////////////////////////////////////////////////////////////////////////////////////
+// // localities table > save siruta on separate column
+function tableExtractSirutaColumn(indexString, csvData) {
+  console.log(`${indexString} >>> START process SIRUTA`);
+
+  // find column index and name
+  //  console.log(csvData[0]);
+  const locIndex = csvData[0].map(item => item.trim()).indexOf('Localitati');
+  const ctyIndex = csvData[0].map(item => item.trim()).indexOf('Municipii si orase');
+  const colIndex = locIndex > ctyIndex ? locIndex : ctyIndex;
+  const colName = locIndex > ctyIndex ? 'Localitati' : 'Municipii si orase';
+  console.log(`${colIndex} :: ${colName}`);
+
+  // process line by line, extract SIRUTA code, save into new array
+  const newTableData = csvData.map((line, index) => {
+    // if header line
+    if (index === 0) {
+      // insert new column header
+      const newHeader = line;
+      newHeader.splice(colIndex, 0, 'SIRUTA');
+      newHeader[colIndex + 1] = colName;
+      return newHeader;
+      // if data line
+    } else {
+      // split column value
+      const currName = line[colIndex];
+      let re = /((?<siruta>\d+)\s)?(?<uat>.*)/gm;
+      const matchedRE = re.exec(currName);
+      const siruta = matchedRE.groups.siruta || '';
+      const uat = matchedRE.groups.uat;
+      const newLine = line;
+      newLine.splice(colIndex, 0, siruta);
+      newLine[colIndex + 1] = uat;
+      // console.log(newLine);
+      return newLine;
+    }
+  });
+  console.log(`${indexString} >>> END process SIRUTA`);
+  // return new array
+  return newTableData;
+}
 
 // ///////////////////////////////////////////////////////////////////////////////////////
 // // extract counties from files that have localities level data
@@ -69,8 +111,12 @@ function extractCounties(counties) {
   console.log(`\nTOTAL COUNT = ${locLevelTables.length}\n`);
   // console.log(locLevelTablesNames);
 
-  // write new index file, containing only the 'lacalitate' level tables
-  fs.writeFileSync(`${outPath}/indexList.csv`, `${locLevelTables.map(row => row.join(';')).join('\n')}`);
+  // write new index file, containing only the 'localitate' level tables
+  const newIndexesTable = locLevelTables.map((row) => {
+    const newRow = row.join('","');
+    return `"${newRow}"`;
+  });
+  fs.writeFileSync(`${outPath}/indexList.csv`, newIndexesTable.join('\n'));
 
   // for each table, filter the given county
   locLevelTablesNames.forEach((tableName, index) => {
@@ -80,21 +126,29 @@ function extractCounties(counties) {
     // if file is found in path
     if (fs.existsSync(filePath)) {
       // return parsed file
-      const tableData = fs.readFileSync(filePath, 'utf8').split('\n');
+      // const tableData = fs.readFileSync(filePath, 'utf8').split('\n');
+      const tableData = readCSV(filePath, '#');
       console.log(`${tableName} :: file read successfully`);
 
-      // process line by line, extract SIRUTA code, save into new array
-      const newTableData = tableData.map((line, index) => {
-        // if header line
-        if (index === 0) {
-          let newLine = line.replace(/;(Localitati)\s*;/gm, ';SIRUTA;$1;');
-          return newLine.replace(/;(Municipii si orase)\s*;/gm, ';SIRUTA;$1;');
+      // // process line by line, extract SIRUTA code, save into new array
+      // const newTableData = tableData.map((line, index) => {
+      //   // if header line
+      //   if (index === 0) {
+      //     let newLine = line.replace(/#(Localitati)\s*#/gm, '#SIRUTA#$1#');
+      //     newLine = newLine.replace(/#(Municipii si orase)\s*#/gm, '#SIRUTA#$1#');
+      //     const returnLine = newLine.split('#');
+      //     return `"${returnLine.join('","')}"`;
+      //
+      //   // if data line
+      //   } else {
+      //     const newLine = line.replace(/#(\d{5,})\s([^#]+)#/, '#$1#$2#');
+      //     const returnLine = newLine.split('#');
+      //     return `"${returnLine.join('","')}"`;
+      //   }
+      // });
 
-        // if data line
-        } else {
-          return line.replace(/;(\d{5,})\s([^;]+);/, ';"$1";"$2";');
-        };
-      });
+      // save siruta to separate column
+      const newTableData = tableExtractSirutaColumn(tableName, tableData);
 
       // write new table data to file
       counties.forEach((county) => {
@@ -106,8 +160,7 @@ function extractCounties(counties) {
         // write new file to county folder
         fs.writeFileSync(`${outPath}/${county.code}/${tableName}.csv`, `${filteredTable.join('\n')}`);
       });
-    };
-
+    }
 
   });
 
