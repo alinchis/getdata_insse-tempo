@@ -132,7 +132,7 @@ function cleanData(resArray) {
   console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> clean data >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
   // resArray is an array of arrays [['item;item;item', 'line2', 'line3', ..],[],..[]]
   let prevLineArr = [];
-  // flatted the array to break the array items into items
+  // flattened the array to break the array items into items
   // for each permutation array in permutations array
   return resArray.flat().filter(line => line).map((line) => {
     // console.log(line);
@@ -161,7 +161,83 @@ function cleanData(resArray) {
       // return line as csvDelimiter separated string
       }).join(csvDelimiter);
     }
-  })
+  });
+}
+
+// /////////////////////////////////////////////////////////////////////
+// clean data array
+function moveColumns(inArray) {
+  console.log('\x1b[34m%s\x1b[0m', `\nPROGRESS: Move miss-aligned columns to correct positions`);
+  // console.log(inArray);
+  // fs.writeFileSync('./2021-02-09/test/AGR101B.csv', inArray.join('\n'));
+
+  // prepare return array
+  const outArray = [];
+
+  // extract header row
+  const headerRow = inArray[0].split('#');
+
+  // traverse in array
+  let missalignedFlag = false;
+  let maColumnIndexes = [];
+
+  for(let i = 0; i < inArray.length; i += 1) {
+    // console.log(`\n#${i} :`);
+    // console.log(inArray[i]);
+    // if header row, check for size
+    if (inArray[i][0] === '#') {
+      // reset miss-aligned column indexes array
+      maColumnIndexes = [];
+      const hRow = inArray[i].split('#');
+      // if current header row is equal in length to array header
+      if (hRow.length === headerRow.length) {
+        // console.log('\t# > length === true');
+        // set miss-aligned flag to false
+        missalignedFlag = false;
+
+        // else, this is a miss-aligned header row
+      } else {
+        // console.log('\t# > length === false');
+        // set miss-aligned flag to true
+        missalignedFlag = true;
+        // calculate columns indexes
+        inArray[i].split('#').forEach((item) => {
+          maColumnIndexes.push(headerRow.indexOf(item));
+        });
+      }
+      // skip to next item in array
+      continue;
+    }
+
+    // if miss-aligned row
+    if (missalignedFlag) {
+      // console.log('\t# > missalignedFlag === true');
+      // prepare current row
+      const currentRow = inArray[i].split('#');
+      // create new row
+      const newRow = Array(headerRow.length).fill('');
+      // for each index in column index array
+      console.log(maColumnIndexes);
+      maColumnIndexes.forEach((ix, index) => {
+        if (ix >= 0) {
+          newRow[ix] = currentRow[index];
+        } else {
+          newRow[index] = currentRow[index];
+        }
+      });
+      // push new row into return array
+      outArray.push(newRow.join('#'));
+
+      // else, there is no need for changes
+    } else {
+      // console.log('\t# > missalignedFlag === false');
+      // push original row into return array
+      outArray.push(inArray[i]);
+    }
+  }
+
+  // return new array
+  return outArray;
 }
 
 // /////////////////////////////////////////////////////////////////////
@@ -244,17 +320,22 @@ function extractDataA(tablePrefix, tableName, permutation, permutationsTotal, re
   // process html table
   const $ = cheerio.load(htmlTable);
   // select all 'tr' elements
-  const trArray = $('tr');
+  let trArray = $('tr');
   console.log('\x1b[33m%s\x1b[0m', `${tablePrefix}.${tableName} :: ${permutation[0]}/${permutationsTotal} >>> trArray.length = ${trArray.length - 6 }\n`);
   
   // filter out the first 5 rows
   // 0: tableTitle, 1: keys array (w/o UM), 2: timesArray, 3: UM header, 4: UM array
   // last row is footer
-  $(trArray).slice(5, trArray.length - 1)
+  $(trArray).splice(3, 2);
+  // console.log(`trArray.length: ${$(trArray).length}`);
+  // console.log(`trArray[2].length: ${$(trArray).eq(2).children().length}`);
+  // console.log(`trArray[3].length: ${$(trArray).eq(3).children().length}`);
+  const headerColumnsCount = $(trArray).eq(3).children().length - $(trArray).eq(2).children().length;
+  console.log('headerColumnsCount: ', headerColumnsCount);
+  $(trArray).slice(2, trArray.length - 1) // remove rows 0,1,3,4, timesArray is needed for further checks
     .each((i, row) => {
       // console.log($(row).text());
-      // console.log('bucla 1');
-      const rowArray = [];
+      const rowArray = i === 0 ? Array(headerColumnsCount) : [];
       $(row).children().each((j, cell) => {
         // console.log('bucla 2');
         // console.log($(cell).text());
@@ -270,7 +351,7 @@ function extractDataA(tablePrefix, tableName, permutation, permutationsTotal, re
   // check return array if it has expected number of rows
   const arrayLength = returnArray.length;
   const expectedLength = permutation[1];
-  console.log(`@extractDataA :: return array length = ${arrayLength} / expected = ${expectedLength}`);
+  console.log(`@extractDataA :: return array length = ${arrayLength} / expected = ${expectedLength + 1}`);
   // retrun array for current permutation
   return returnArray;
 }
@@ -294,7 +375,7 @@ function extractDataB(tablePrefix, tableName, permutation, permutationsTotal, re
   // filter out the first 3 rows
   // 0: tableTitle, 1: keys array (w UM), 2: timesArray
   // last row is footer
-  $(trArray).slice(3, trArray.length - 1)
+  $(trArray).slice(2, trArray.length - 1) // replaced 3 with 2, timesArray is needed for future checks
     .each((i, row) => {
       // console.log($(row).text());
       // console.log('bucla 1');
@@ -312,7 +393,7 @@ function extractDataB(tablePrefix, tableName, permutation, permutationsTotal, re
   // check return array if it has expected number of rows
   const arrayLength = returnArray.length;
   const expectedLength = permutation[1];
-  console.log(`@extractDataB :: return array length = ${arrayLength} / expected = ${expectedLength}`);
+  console.log(`@extractDataB :: return array length = ${arrayLength} / expected = ${expectedLength + 1}`);
   // retrun array for current permutation
   return returnArray;
 }
@@ -458,10 +539,14 @@ async function downloadTable(downloadDate, table, manualPermIndex) {
   // tableData is an array of arrays [['item;item;item', 'line2', 'line3', ..],[],..[]]
   console.log('\x1b[33m%s\x1b[0m', `\n${table.tablePrefix}.${table.tableName} :: clean DATA >>>`);
   const cleanedData = cleanData(tableData.flat());
+
+  // move miss-aligned columns, caused by less columns returned than expected
+  console.log('\x1b[33m%s\x1b[0m', `\n${table.tablePrefix}.${table.tableName} :: move miss-aligned columns >>>`);
+  const writeArray = moveColumns(cleanedData);
   
   // save data to file
   console.log('\x1b[33m%s\x1b[0m', `\n${table.tablePrefix}.${table.tableName} :: >>> save DATA`);
-  writeData(`./${downloadDate}/tables/${table.tableName}.csv`, `${cleanedData.join('\n')}\n`);
+  writeData(`./${downloadDate}/tables/${table.tableName}.csv`, `${writeArray.join('\n')}\n`);
 
   // save log
   console.log('\x1b[33m%s\x1b[0m', `\n${table.tablePrefix}.${table.tableName} :: >>> save LOG`);
@@ -535,4 +620,10 @@ module.exports =  (downloadDate, tablesArray, newFlag) => {
 
   // download tables from tablesArray
   downloadTables(downloadDate, tempoL3, tablesArray);
+
+  // test function
+  // const inArray = readCSV('./2021-02-09/test/AGR101B.csv', '\n');
+  // // console.log(inArray.flat());
+  // const outArray = moveColumns(inArray.flat());
+  // fs.writeFileSync('./2021-02-09/extracts/AGR101B.csv', outArray.join('\n'));
 };

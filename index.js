@@ -394,6 +394,9 @@ function main() {
       // 'EXP101A': [], // multiple UM all valid
       // 'POP107D': [],
       // 'AGR101A': [], // test '-'
+      // 'AGR101B': [], // return pattern is changed for some queries -> misaligned columns
+      // 'PNS101B': [], // internal server error, must change permutation style
+      // 'ART104C': [],
     };
 
   // run requested command

@@ -70,7 +70,7 @@ function tableExtractSirutaColumn(indexString, csvData) {
       const newHeader = line;
       newHeader.splice(colIndex, 0, 'SIRUTA');
       newHeader[colIndex + 1] = colName;
-      return newHeader;
+      return `"${newHeader.join('","')}"`;
       // if data line
     } else {
       // split column value
@@ -83,7 +83,7 @@ function tableExtractSirutaColumn(indexString, csvData) {
       newLine.splice(colIndex, 0, siruta);
       newLine[colIndex + 1] = uat;
       // console.log(newLine);
-      return newLine;
+      return `"${newLine.join('","')}"`;;
     }
   });
   console.log(`${indexString} >>> END process SIRUTA`);
@@ -149,6 +149,7 @@ function extractCounties(counties) {
 
       // save siruta to separate column
       const newTableData = tableExtractSirutaColumn(tableName, tableData);
+      // console.log(newTableData);
 
       // write new table data to file
       counties.forEach((county) => {
