@@ -4,6 +4,10 @@
 const fs = require('fs');
 
 
+// local constants
+const csvDelimiter = '#';
+
+
 // ////////////////////////////////////////////////////////////////////////////////////////////
 // // METHODS
 
@@ -13,11 +17,11 @@ function readFile(filePath) {
   if (fs.existsSync(filePath)) {
     // return parsed file
     return JSON.parse(fs.readFileSync(filePath, 'utf8'));
-  };
+  }
   // else return empty object
   console.log('\x1b[31m%s\x1b[0m',`ERROR: tempoL file NOT found!`);
   return {};
-};
+}
 
 // get table prefix
 function getTablePrefix(folderPath, item) {
@@ -31,7 +35,7 @@ function getTablePrefix(folderPath, item) {
   const tablePrefix = `${ancestorPrefix}.${tableIndex}`;
   // return value
   return tablePrefix;
-};
+}
 
 // get first and last year
 function getYears(item) {
@@ -155,7 +159,7 @@ module.exports = async (downloadDate) => {
     // // table title
     newLine.push(`\"${item.matrixName.trim()}\"`);
     // add new line to new table
-    indexArr.push(newLine.join(';'));
+    indexArr.push(newLine.join(csvDelimiter));
   });
 
   // write to file

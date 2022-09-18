@@ -26,11 +26,11 @@ function readFile(filePath) {
   if (fs.existsSync(filePath)) {
     // return parsed file
     return JSON.parse(fs.readFileSync(filePath, 'utf8'));
-  };
+  }
   // else return empty object
   console.log('\x1b[31m%s\x1b[0m',`ERROR: tempoL file NOT found!`);
   return {};
-};
+}
 
 
 // ////////////////////////////////////////////////////////////////////////////
@@ -45,7 +45,7 @@ function createFolder(folderName) {
   } else {
     console.log('\x1b[31m%s\x1b[0m',`ERROR: Folder \"${folderName}\" already exists!`);
   }
-};
+}
 
 // /////////////////////////////////////////////////////////////////////
 // remove download folder and any files inside
@@ -60,7 +60,7 @@ function removeFolder(folderName) {
   } else {
     console.log('\x1b[31m%s\x1b[0m',`ERROR: Folder \"${folderName}\" does NOT exist!`);
   }
-};
+}
 
 // /////////////////////////////////////////////////////////////////////
 // init sub-folders for new download
@@ -86,7 +86,7 @@ function getCurrentDate() {
   const regex = /^(\d{4}-\d{2}-\d{2})/g;
   // return formated string
   return today.match(regex)[0];
-};
+}
 
 // /////////////////////////////////////////////////////////////////////
 // get most recent download folder
@@ -108,8 +108,8 @@ function getRecentFolder(today) {
     return foldersArray[folderIndex];
   } else {
     return '';
-  };
-};
+  }
+}
 
 // /////////////////////////////////////////////////////////////////////
 // check if metadata files are present in download folder
@@ -138,8 +138,8 @@ function checkMetadata(today) {
   } else {
     console.log('\x1b[36m%s\x1b[0m', `INFO: Metadata folder does not exist!\n`);
     return false;
-  };
-};
+  }
+}
 
 // /////////////////////////////////////////////////////////////////////
 // check if index list exists
@@ -164,8 +164,8 @@ function checkIndexList(today) {
   } else {
     console.log('\x1b[36m%s\x1b[0m', `INFO: Metadata folder does not exist!\n`);
     return false;
-  };
-};
+  }
+}
 
 // /////////////////////////////////////////////////////////////////////
 // check if headers file exists
@@ -190,8 +190,8 @@ function checkHeaders(today) {
   } else {
     console.log('\x1b[36m%s\x1b[0m', `INFO: Metadata folder does not exist!\n`);
     return false;
-  };
-};
+  }
+}
 
 // /////////////////////////////////////////////////////////////////////
 // check if permutations are present for all tables
@@ -206,7 +206,7 @@ function checkPermutations(currentDate) {
     const result = arr.map((item) => {
       // check if table has permutation file
       return fs.existsSync(`${permutationsPath}/${item.tableName}.csv`);
-    // if all values are true the result is true, oterwise the result is false 
+    // if all values are true the result is true, oterwise the result is false
     }).reduce((acc, val) => acc && val);
     // return result
     if (result) {
@@ -217,13 +217,13 @@ function checkPermutations(currentDate) {
       // if false
       console.log('\x1b[36m%s\x1b[0m', `INFO: Some Permutations files were NOT found!\n`);
       return false;
-    };
+    }
   // permutations folder is not found, return false
   } else {
     console.log('\x1b[36m%s\x1b[0m', `INFO: Permutations folder does not exist!\n`);
     return false;
-  };
-};
+  }
+}
 
 // /////////////////////////////////////////////////////////////////////
 // check if logs are present for all tables
@@ -238,7 +238,7 @@ function checkLogs(currentDate) {
     const result = arr.map((item) => {
       // check if table has permutation file
       return fs.existsSync(`${logsPath}/${item.tableName}.csv`);
-    // if all values are true the result is true, oterwise the result is false 
+    // if all values are true the result is true, oterwise the result is false
     }).reduce((acc, val) => acc && val);
     // return result
     if (result) {
@@ -249,13 +249,13 @@ function checkLogs(currentDate) {
       // if false
       console.log('\x1b[36m%s\x1b[0m', `INFO: Some Logs were NOT found!\n`);
       return false;
-    };
+    }
   // permutations folder is not found, return false
   } else {
     console.log('\x1b[36m%s\x1b[0m', `INFO: Logs folder does not exist!\n`);
     return false;
-  };
-};
+  }
+}
 
 // /////////////////////////////////////////////////////////////////////
 // create log files for all tables
@@ -278,9 +278,9 @@ function initLogFiles(downloadDate) {
   } else {
     console.log('\x1b[36m%s\x1b[0m', `INFO: Source file does not exist!\n`);
     throw new Error('@initLogFiles :: Source file not found!');
-  };
+  }
   console.log('\x1b[36m%s\x1b[0m', `INFO: log files created!`);
-};
+}
 
 
 // ////////////////////////////////////////////////////////////////////////////
@@ -307,7 +307,7 @@ async function newDownload(today, tablesArr) {
   initLogFiles(today);
   // start downloads
   downloadTables(today, tablesArr, true);
-};
+}
 
 // /////////////////////////////////////////////////////////////////////
 // continue most recent download
@@ -322,15 +322,15 @@ async function continueDownload(today, tablesArr) {
     // check for metadata files
     if (!checkMetadata(currentDownloadFolder)) {
       await getMetadata(currentDownloadFolder);
-    };
+    }
     // check for index list
     if (!checkIndexList(currentDownloadFolder)) {
       await createIndexList(currentDownloadFolder);
-    };
+    }
     // check for headers file
     if (!checkHeaders(currentDownloadFolder)) {
       await createHeaders(currentDownloadFolder);
-    };
+    }
     // check permutations
     if (!checkPermutations(currentDownloadFolder)) {
       await createPermutations(currentDownloadFolder);
@@ -349,13 +349,13 @@ async function continueDownload(today, tablesArr) {
     } else {
       // continue downloads
       downloadTables(currentDownloadFolder, tablesArr, false);
-    };
+    }
 
-  // if no downloads folder is found  
+  // if no downloads folder is found
   } else {
     console.log('\x1b[31m%s\x1b[0m',`ERROR: NO download folders found!`);
   }
-};
+}
 
 
 // ////////////////////////////////////////////////////////////////////////////

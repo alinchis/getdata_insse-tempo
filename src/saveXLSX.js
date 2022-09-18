@@ -6,7 +6,7 @@ const XLSX = require('xlsx');
 const cliProgress = require('cli-progress');
 
 // paths
-const downloadDate = '2021-02-04';
+const downloadDate = '2022-09-18';
 const inPath = `../${downloadDate}`;
 const indexListPath = `${inPath}/metadata/indexList.csv`;
 const tablesPath = `${inPath}/tables`;
@@ -159,7 +159,7 @@ function splitTableByCounties(indexString, newTableData) {
 // convert files
 function convertFiles(indexListPath, tablesPath) {
   // load list of tables
-  const filesArr = readCSV(indexListPath, ';');
+  const filesArr = readCSV(indexListPath, '#');
 
   // set counter
   const totalFiles = filesArr.length;
@@ -235,7 +235,7 @@ function convertFiles(indexListPath, tablesPath) {
       notFoundArr.push(filesArr[i][4]);
     }
   }
-  
+
   // print summary
   console.log('\n\n@convertFile > Summary:');
   console.log(`\t> files total: ${totalFiles}`);

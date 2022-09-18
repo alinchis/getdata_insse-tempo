@@ -5,14 +5,14 @@ const fs = require('fs');
 const axios = require('axios');
 
 
-// /////////////////////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // // EXPORTS
 
-// /////////////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // // get metadata from INSSE-Tempo server and save it in JSON files
 module.exports = async (today) => {
 	console.log('\x1b[34m%s\x1b[0m', `PROGRESS: Download Metadata`);
-	
+
 	console.log('@INSSE::Tempo import started ... ');
 	// declare variables
 	const savePath = `./${today}/metadata`;
@@ -25,7 +25,7 @@ module.exports = async (today) => {
 	const tempoL2 = { level2: [] };
 	const tempoL3 = { level3: [] };
 
-	// /////////////////////////////////////////////////////////////////////
+	// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// // get tempo Level 1: Chapters + Sections
 	console.log('@INSSE::Level 1: START >>>');
 	await axios.get(tempoL1Path)
@@ -33,11 +33,11 @@ module.exports = async (today) => {
 			tempoL1.level1 = response.data;
 		})
 		.catch(err => console.log(err));
-	console.log(`@INSSE::Level 1: tempoL1.json - ${tempoL1.level1.length} items`)
+	console.log(`@INSSE::Level 1: tempoL1.json - ${tempoL1.level1.length} items`);
 	fs.writeFileSync(tempoL1File, JSON.stringify(tempoL1), 'utf8', () => console.log(`@INSSE::Level 1: File tempoL1.json closed: ${tempoL1.level1.length} items`));
-	console.log('@INSSE::Leves 1: Done');
+	console.log('@INSSE::Level 1: Done');
 
-	// /////////////////////////////////////////////////////////////////////
+	// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// // get tempo Level 2: Sub-Sections
 	// create items list
 	const l1list = tempoL1.level1.filter(item => item.level === 2);
@@ -57,19 +57,19 @@ module.exports = async (today) => {
 		// redone requests with for loop, server did not response
 		// possibly, there are new rules implemented on server
 		const responseArr = [];
-		for (item of list) {
+		for (const item of list) {
 			// console.log(item);
 			const tempoL2Path = tempoL1Path + item.context.code;
 			responseArr.push(await axios.get(tempoL2Path)
 				.then(response => response.data)
 				.catch(err => console.log(err))
-			)
-		};
+			);
+		}
 		// console.log(responseArr);
 		return responseArr;
-	};
+	}
 
-	// /////////////////////////////////////////////////////////////////////
+	// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// run function
 	tempoL2.level2 = await getL2(l1list)
 		.then(res => res)
@@ -79,7 +79,7 @@ module.exports = async (today) => {
 	console.log('@INSSE::Level 2: Done');
 
 
-	// /////////////////////////////////////////////////////////////////////
+	// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// // get tempo Level 3: Tables interface
 	// create tables list by concatenating the children attributes together
 	let l2list = [];
@@ -87,10 +87,11 @@ module.exports = async (today) => {
 		// console.log(item.children);
 		l2list = l2list.concat(item.children);
 	});
+	const l3listLength = l2list.length;
 	console.log('@INSSE::Level 3: START >>>');
-	console.log('@INSSE::Level 3: L2 list - ', l2list.length);
+	console.log('@INSSE::Level 3: L2 list - ', l3listLength);
 
-	// /////////////////////////////////////////////////////////////////////
+	// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// declare query function
 	async function getL3(list) {
 		return Promise.all(
@@ -118,7 +119,7 @@ module.exports = async (today) => {
 		);
 	}
 
-	// /////////////////////////////////////////////////////////////////////
+	// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// run function
 	const itemsList = l2list;
 	let iter = 0;
@@ -128,13 +129,13 @@ module.exports = async (today) => {
 		const batchList = itemsList.splice(0, 10);
 		tempoL3.level3 = tempoL3.level3.concat(await getL3(batchList)
 			.then((res) => {
-				console.log(`L3 download: ${iter}/1324 (@2019-06-20)`);
+				console.log(`L3 download: ${iter}/${l3listLength} (@${today})`);
 				// fs.appendFileSync(tempoL3File, JSON.stringify(res), 'utf8');
 				return res;
 			})
-			.catch(err => console.log(err)))
+			.catch(err => console.log(err)));
 	}
 	console.log('@INSSE:Level 3: Done reading from source');
 	// write to file
 	fs.writeFileSync(tempoL3File, JSON.stringify(tempoL3), 'utf8', () => console.log(`@INSSE::Level 3: File tempoL3.json closed: ${tempoL3.level3.length} items`));
-}
+};

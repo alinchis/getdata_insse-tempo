@@ -22,11 +22,11 @@ function readJSON(filePath) {
   if (fs.existsSync(filePath)) {
     // return parsed file
     return JSON.parse(fs.readFileSync(filePath, 'utf8'));
-  };
+  }
   // else return empty object
   console.log('\x1b[31m%s\x1b[0m',`ERROR: ${filePath} file NOT found!`);
   return {};
-};
+}
 
 // /////////////////////////////////////////////////////////////////////
 // load csv file
@@ -36,11 +36,11 @@ function readCSV(filePath, delimiter) {
     // return parsed file
     const newArray = fs.readFileSync(filePath, 'utf8').split('\n');
     return newArray.filter(line => line).map(line => line.split(delimiter || ','));
-  };
+  }
   // else return empty object
   console.log('\x1b[31m%s\x1b[0m',`ERROR: ${filePath} file NOT found!`);
   return [];
-};
+}
 
 // /////////////////////////////////////////////////////////////////////
 // create POST body
@@ -52,7 +52,7 @@ function createPostBody(header, permutation) {
   postBody.matrixDetails = header.details;
   // return POST body
   return postBody;
-};
+}
 
 // /////////////////////////////////////////////////////////////////////
 // test if response string returns data
@@ -82,7 +82,7 @@ function testForData(tablePrefix, tableName, permutationIndex, permutationsTotal
   }
   // return result
   return test;
-};
+}
 
 // /////////////////////////////////////////////////////////////////////
 // append log file
@@ -92,7 +92,7 @@ function appendLog(downloadDate, tableName, message) {
     if (err) throw err;
     // console.log('Log entry done!');
   });
-};
+}
 
 // /////////////////////////////////////////////////////////////////////
 // append tables log file
@@ -102,21 +102,21 @@ function appendCompletedLog(downloadDate, message) {
     if (err) throw err;
     // console.log('Log entry done!');
   });
-};
+}
 
 // /////////////////////////////////////////////////////////////////////
 // append data file
 function writeData(filePath, message) {
   // write to file
 	fs.writeFileSync(filePath, message, 'utf8');
-};
+}
 
 // /////////////////////////////////////////////////////////////////////
 // break array into chunks
 function chunkArray(myArray, chunk_size){
   const arrayLength = myArray.length;
   const tempArray = [];
-  
+
   for (let index = 0; index < arrayLength; index += chunk_size) {
       myChunk = myArray.slice(index, index+chunk_size);
       // Do something if you want with the group
@@ -322,7 +322,7 @@ function extractDataA(tablePrefix, tableName, permutation, permutationsTotal, re
   // select all 'tr' elements
   let trArray = $('tr');
   console.log('\x1b[33m%s\x1b[0m', `${tablePrefix}.${tableName} :: ${permutation[0]}/${permutationsTotal} >>> trArray.length = ${trArray.length - 6 }\n`);
-  
+
   // filter out the first 5 rows
   // 0: tableTitle, 1: keys array (w/o UM), 2: timesArray, 3: UM header, 4: UM array
   // last row is footer
@@ -452,7 +452,7 @@ async function getTableData(downloadDate, table, permutation, permutationsTotal,
             // throw error
             throw new Error('NO table type');
           }
-          
+
           // return resData.data;
         // response has no data branch
         } else {
@@ -488,7 +488,7 @@ async function getTableData(downloadDate, table, permutation, permutationsTotal,
 // download one table
 async function downloadTable(downloadDate, table, manualPermIndex) {
   console.log('\x1b[34m%s\x1b[0m', `\nPROGRESS: Download Table >>> ${table.tablePrefix}.${table.tableName}`);
-  
+
   // get permutations from saved file
   const permutationsArrayAll = readCSV(`./${downloadDate}/permutations/${table.tableName}.csv`, csvDelimiter);
   const permutationsTotal = permutationsArrayAll.length - 1;
@@ -543,7 +543,7 @@ async function downloadTable(downloadDate, table, manualPermIndex) {
   // move miss-aligned columns, caused by less columns returned than expected
   console.log('\x1b[33m%s\x1b[0m', `\n${table.tablePrefix}.${table.tableName} :: move miss-aligned columns >>>`);
   const writeArray = moveColumns(cleanedData);
-  
+
   // save data to file
   console.log('\x1b[33m%s\x1b[0m', `\n${table.tablePrefix}.${table.tableName} :: >>> save DATA`);
   writeData(`./${downloadDate}/tables/${table.tableName}.csv`, `${writeArray.join('\n')}\n`);

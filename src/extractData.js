@@ -4,7 +4,7 @@
 const fs = require('fs-extra');
 
 // paths
-const downloadDate = '2021-02-04';
+const downloadDate = '2021-02-09';
 const inPath = `../${downloadDate}`;
 const outPath = `../${downloadDate}/extracts`;
 
